@@ -1,2 +1,2 @@
 # ennIO
-An ML-based that recommends film scores.
+An ML-based system that recommends film scores.
