@@ -1,0 +1,2 @@
+class EnnIOException(Exception):
+    pass
