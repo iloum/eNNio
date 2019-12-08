@@ -6,3 +6,7 @@ hmmlearn
 simplejson
 eyed3
 pydub
+opencv-python
+scikit-image
+tqdm
+
