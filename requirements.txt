@@ -1,3 +1,12 @@
+numpy
+matplotlib==1.5.3
+scipy
+sklearn
+hmmlearn
+simplejson
+eyed3
+pydub
 opencv-python
 scikit-image
 tqdm
+
