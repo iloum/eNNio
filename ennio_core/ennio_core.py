@@ -1,5 +1,5 @@
 class EnnIOCore:
-    def __init__(self):
+    def __init__(self, config_manager):
         pass
 
     def construct_model(self):
@@ -9,7 +9,7 @@ class EnnIOCore:
         """
         pass
 
-    def use_model(self):
+    def use_model(self, input_file):
         """
         Method to use the existing model in order to predict a
         suitable music score
@@ -25,10 +25,9 @@ class EnnIOCore:
         """
         pass
 
-    def download_video_from_url_file(self, filename):
+    def download_video_from_url_file(self):
         """
         Method to download video files from CSV file listing youtube URLs
-        :param filename: The name of CSV file
         :return: List of downloaded file names
         """
         pass
