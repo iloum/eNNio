@@ -1,5 +1,5 @@
 class EnnIOCore:
-    def __init__(self, config_manager):
+    def __init__(self):
         pass
 
     def construct_model(self):

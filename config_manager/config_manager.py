@@ -53,7 +53,7 @@ class ConfigManager:
         """
         self.config['GLOBAL'] = {}
         self.set_field(field_name="urls-list-file",
-                       value="data/urls.csv")
+                       value="url_list.csv")
         self.set_field(field_name="ml-model-file",
                        value="data/model.sav")
         self.set_field(field_name="db-file",
