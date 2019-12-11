@@ -1,6 +1,23 @@
+import os
+import re
+import csv
+from config_manager.config_manager import ConfigManager
+from data_aquisitor.data_aquisitor import DataAquisitor
+from ennio_exceptions import EnnIOException
+
+
 class EnnIOCore:
     def __init__(self):
-        pass
+        self._config_manager = ConfigManager()
+        self._data_aquisitor = DataAquisitor()
+        self._video_download_dir = None
+        self._url_list_file_location = None
+
+    def setup(self):
+        self._config_manager.read_config()
+        self._video_download_dir = self._config_manager.get_field('video-download-dir')
+        self._url_list_file_location = self._config_manager.get_field('urls-list-file')
+        self._data_aquisitor.set_download_location(self._config_manager.get_field('video-download-dir'))
 
     def construct_model(self):
         """
@@ -23,14 +40,27 @@ class EnnIOCore:
         :param url: A youtube video URL
         :return: Downloaded file name
         """
-        pass
+        filename = self._data_aquisitor.download_from_url(url)
+        return filename
 
     def download_video_from_url_file(self):
         """
         Method to download video files from CSV file listing youtube URLs
         :return: List of downloaded file names
         """
-        pass
+        downloaded_videos = list()
+        failed_videos = list()
+        for row in self._read_url_file():
+            try:
+                print(row)
+                filename = self._data_aquisitor.download_from_url(row['URL'], row['Start'], row['End'])
+                downloaded_videos.append(os.path.join(self._video_download_dir, filename))
+                #TODO: DB and state stuff
+            except EnnIOException:
+                failed_videos.append(row)
+                continue
+
+        return downloaded_videos, failed_videos
 
     def get_status(self):
         """
@@ -47,3 +77,8 @@ class EnnIOCore:
         """
         return {'audio_features': None,
                 'video_features': None}
+
+    def _read_url_file(self):
+        with open(self._url_list_file_location, encoding='utf-8-sig') as csv_file:
+            for row in csv.DictReader(csv_file):
+                yield row
