@@ -1,5 +1,5 @@
 
-from pyAudioAnalysis.pyAudioAnalysis.MidTermFeatures import directory_feature_extraction as dW
+from pyAudioAnalysis.MidTermFeatures import directory_feature_extraction as dW
 
 
 class AudioFeatureExtractor:
