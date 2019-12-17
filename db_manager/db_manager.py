@@ -16,6 +16,9 @@ class DbManager:
     def is_url_in_db(self, url):
         return url in self._urls
 
+    def is_video_id_in_db(self, video_id):
+        return video_id in self._db.keys()
+
     def save_video_data(self, video_id, filename, file_path, url):
         self._urls.append(url)
         self._db[video_id] = {'filename': filename,

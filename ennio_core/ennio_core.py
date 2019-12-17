@@ -4,8 +4,9 @@ import hashlib
 import csv
 from config_manager.config_manager import ConfigManager
 from data_aquisitor.data_aquisitor import DataAquisitor
-from ennio_exceptions import EnnIOException
+from ennio_exceptions import VideoAlreadyExist, EnnIOException
 from db_manager.db_manager import DbManager
+from stream_splitter.stream_splitter import StreamSplitter
 
 
 class EnnIOCore:
@@ -13,8 +14,11 @@ class EnnIOCore:
         self._config_manager = ConfigManager()
         self._data_aquisitor = DataAquisitor()
         self._db_manager = DbManager()
+        self._stream_splitter = StreamSplitter()
         self._video_download_dir = None
         self._url_list_file_location = None
+        self._video_stream_dir = None
+        self._audio_stream_dir = None
 
     def setup(self):
         self._config_manager.read_config()
@@ -22,6 +26,8 @@ class EnnIOCore:
         self._url_list_file_location = self._config_manager.get_field('urls-list-file')
         self._data_aquisitor.set_download_location(self._config_manager.get_field('video-download-dir'))
         self._db_manager.setup(self._config_manager.get_field('db-file'))
+        self._stream_splitter.set_video_stream_location(self._config_manager.get_field('video-stream-dir'))
+        self._stream_splitter.set_audio_stream_location(self._config_manager.get_field('audio-stream-dir'))
 
     def on_exit(self):
         self._db_manager.close_db()
@@ -31,7 +37,8 @@ class EnnIOCore:
         Method to create and train an ML model
         :return:
         """
-        pass
+        self.download_video_from_url_file()
+
 
     def use_model(self, input_file):
         """
@@ -64,16 +71,20 @@ class EnnIOCore:
             if self._db_manager.is_url_in_db(url):
                 continue
             try:
-                filename = self._data_aquisitor.download_from_url(url, start_time=start_time, end_time=end_time)
-                file_path = os.path.join(self._video_download_dir, filename)
+                file_path = self._download_video_from_entry(url, start_time, end_time)
                 downloaded_videos.append(file_path)
-                video_id = self._get_video_id(file_path)
-                self._db_manager.save_video_data(video_id, filename, file_path, url)
             except EnnIOException:
                 failed_videos.append(row)
                 continue
 
         return downloaded_videos, failed_videos
+
+    def _download_video_from_entry(self, url, start_time, end_time):
+        filename = self._data_aquisitor.download_from_url(url, start_time=start_time, end_time=end_time)
+        file_path = os.path.join(self._video_download_dir, filename)
+        video_id = self._get_video_id(file_path)
+        self._db_manager.save_video_data(video_id, filename, file_path, url)
+        return file_path
 
     def get_status(self):
         """
@@ -86,10 +97,15 @@ class EnnIOCore:
         """
         Method to extract audio and video features from files
         :param filenames: List of file names to be used
-        :return: Dictionary containing video and audio features
         """
-        return {'audio_features': None,
-                'video_features': None}
+        for filename in filenames:
+            file_path = os.path.join(self._video_download_dir, filename)
+            video_id = self._get_video_id(file_path)
+            if self._db_manager.is_video_id_in_db(video_id):
+                raise VideoAlreadyExist
+
+            audio_stream_file_path, video_stream_file_path = self._stream_splitter.split_video_file(file_path)
+
 
     def _read_url_file(self):
         with open(self._url_list_file_location, encoding='utf-8-sig') as csv_file:

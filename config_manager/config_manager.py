@@ -71,3 +71,7 @@ class ConfigManager:
                        value="data/downloads/")
         self.set_field(field_name="output-dir",
                        value="data/output/")
+        self.set_field(field_name="video-stream-dir",
+                       value="data/video-streams/")
+        self.set_field(field_name="audio-stream-dir",
+                       value="data/audio-streams/")

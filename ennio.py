@@ -24,6 +24,7 @@ class UserInterface(Cmd):
 
     def do_exit(self, args):
         """Exit the application"""
+        self.ennio_core.on_exit()
         print("Bye!")
         return True
 
