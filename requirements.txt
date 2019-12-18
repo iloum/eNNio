@@ -9,4 +9,6 @@ pydub
 opencv-python
 scikit-image
 tqdm
-
+keras
+pandas
+tensorflow
