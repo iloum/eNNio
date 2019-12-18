@@ -2,14 +2,14 @@ import sqlalchemy as sql
 from sqlalchemy import exc
 from sqlalchemy.orm import create_session
 
-from db_manager.data_schema import Base, Clip, clip_header
+from db_manager.data_schema import Base, Clip, clip_header, audio_header
 
 
-class DbManager(object):
+class ClipDbManager(object):
     """
     CLass that manages all DB operations
     """
-    def __init__(self, path="", db_name="library"):
+    def __init__(self, path="", db_name="eNNio_DB"):
         self._db_name = self.validate_db_name(db_name)
         self.engine = sql.create_engine('sqlite:///{path}{db_name}.db'
                                         .format(path=path, db_name=self.db_name))
@@ -34,7 +34,7 @@ class DbManager(object):
     def save_clip(self):
         self.session.flush()
 
-    def delete_clip(self, row):
+    def delete_clip_by_row(self, row):
         self.session.delete(row)
         self.session.flush()
 
@@ -63,12 +63,12 @@ class DbManager(object):
         table.extend([clip.get_row() for clip in clips])
         return tuple(table)
 
-    def import_table(self, table):
+    def import_clip_table(self, table):
         """
         Creates clip entries from a table and saves them to DB
         :param table: a tuple of tuples containing clip attributes
         """
-        attributes_to_index = self.get_indexes_for_book_attributes(table[0])
+        attributes_to_index = self.get_indexes_for_clip_attributes(table[0])
         clips = self.create_clips_from_table(attributes_to_index, table[1:])
         self.session.add_all(clips)
         self.session.flush()
@@ -92,8 +92,20 @@ class DbManager(object):
         clips = []
         for row in table:
             try:
-                new_clip = Clip(**self.get_book_attributes_from_row(attributes_to_index, row))
+                new_clip = Clip(**self.get_clip_attributes_from_row(attributes_to_index, row))
                 clips.append(new_clip)
             except exc.InvalidInputException:
                 continue
         return clips
+
+    @staticmethod
+    def get_clip_attributes_from_row(attributes_to_index, row):
+        clip_args = dict()
+        for key, index in attributes_to_index.items():
+            value = row[index]
+            if value:
+                clip_args[key] = row[index]
+        if not clip_args["author"] or not clip_args["title"]:
+            raise exc.InvalidInputException
+        return clip_args
+
