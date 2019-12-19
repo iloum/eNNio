@@ -13,7 +13,8 @@ class AudioFeatureExtractor:
                                mid_window=1,
                                mid_step=1,
                                short_window=0.05,
-                               short_step=0.05,):
+                               short_step=0.05,
+                               get_names=False):
         """
         Method to extract audio features from an audio file
         :param file_path: Name of the audio file
@@ -21,7 +22,10 @@ class AudioFeatureExtractor:
         :param mid_step: the mid-term step
         :param short_window: the short-term window
         :param short_step: the short-term step
-        :return: Numpy array containing audio features, list of mid-feature names
+        :param get_names: defines whether the function will return the feature names or not.
+                default value is False.
+        :return: Numpy array containing audio features,
+                (list of mid-feature names if get_names=True)
         """
         # check for empty file
         if os.stat(file_path).st_size == 0:
@@ -43,5 +47,9 @@ class AudioFeatureExtractor:
                 (not np.isinf(mid_features).any()):
             mid_features = np.append(mid_features, beat)
             mid_features = np.append(mid_features, beat_conf)
-        return mid_features
+            mid_feature_names = mid_feature_names.append(["beat", "beat_conf"])
+        if get_names:
+            return mid_features, mid_feature_names
+        else:
+            return mid_features
 
