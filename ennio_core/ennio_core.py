@@ -1,5 +1,4 @@
 import os
-import re
 import hashlib
 import csv
 from config_manager.config_manager import ConfigManager
@@ -9,7 +8,7 @@ from db_manager.db_manager import DbManager
 from stream_splitter.stream_splitter import StreamSplitter
 from feature_extractor.video_feature_exractor import VideoFeatureExtractor
 from feature_extractor.audio_feature_extractor import AudioFeatureExtractor
-from ml_core.adv_ml_core import MLCore
+from ml_core.ml_core import MLCore
 
 
 class EnnIOCore:
@@ -44,6 +43,7 @@ class EnnIOCore:
         """
         self.download_video_from_url_file()
         self.extract_features(os.listdir(self._video_download_dir))
+        #TODO: Call MLcore
 
 
 
@@ -53,7 +53,8 @@ class EnnIOCore:
         suitable music score
         :return:
         """
-        pass
+        self.extract_features(input_file)
+        # TODO: Call MLcore
 
     def download_video_from_url(self, url):
         """
