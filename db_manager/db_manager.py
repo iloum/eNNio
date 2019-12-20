@@ -1,6 +1,7 @@
 import pickle
 import os
 
+
 class DbManager:
     def __init__(self):
         self._db_file = None
@@ -28,3 +29,15 @@ class DbManager:
     def close_db(self):
         with open(self._db_file, "wb") as f:
             pickle.dump((self._db, self._urls), f)
+
+    def video_features_exist_in_db(self, video_id):
+        return 'video_features' in self._db[video_id]
+
+    def audio_features_exist_in_db(self, video_id):
+        return 'audio_features' in self._db[video_id]
+
+    def save_video_features(self, video_id, video_features):
+        self._db[video_id]['video_features'] = video_features
+
+    def save_audio_features(self, video_id, audio_features):
+        self._db[video_id]['audio_features'] = audio_features

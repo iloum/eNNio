@@ -7,6 +7,9 @@ from data_aquisitor.data_aquisitor import DataAquisitor
 from ennio_exceptions import VideoAlreadyExist, EnnIOException
 from db_manager.db_manager import DbManager
 from stream_splitter.stream_splitter import StreamSplitter
+from feature_extractor.video_feature_exractor import VideoFeatureExtractor
+from feature_extractor.audio_feature_extractor import AudioFeatureExtractor
+from ml_core.adv_ml_core import MLCore
 
 
 class EnnIOCore:
@@ -15,6 +18,8 @@ class EnnIOCore:
         self._data_aquisitor = DataAquisitor()
         self._db_manager = DbManager()
         self._stream_splitter = StreamSplitter()
+        self._video_feature_extractor = VideoFeatureExtractor(None)
+        self._audio_feature_extractor = AudioFeatureExtractor()
         self._video_download_dir = None
         self._url_list_file_location = None
         self._video_stream_dir = None
@@ -38,6 +43,8 @@ class EnnIOCore:
         :return:
         """
         self.download_video_from_url_file()
+        self.extract_features(os.listdir(self._video_download_dir))
+
 
 
     def use_model(self, input_file):
@@ -100,12 +107,25 @@ class EnnIOCore:
         """
         for filename in filenames:
             file_path = os.path.join(self._video_download_dir, filename)
+            if not os.path.isfile(file_path):
+                continue
+
             video_id = self._get_video_id(file_path)
-            if self._db_manager.is_video_id_in_db(video_id):
-                raise VideoAlreadyExist
+            video_features_exist_in_db = self._db_manager.video_features_exist_in_db(video_id)
+            audio_feature_exist_in_db = self._db_manager.audio_features_exist_in_db(video_id)
+
+            if video_features_exist_in_db and audio_feature_exist_in_db:
+                continue
 
             audio_stream_file_path, video_stream_file_path = self._stream_splitter.split_video_file(file_path)
 
+            if not video_features_exist_in_db:
+                video_features, _ = self._video_feature_extractor.extract_video_features(video_stream_file_path)
+                self._db_manager.save_video_features(video_id, video_features)
+
+            if not audio_feature_exist_in_db:
+                audio_features, _ = self._audio_feature_extractor.extract_audio_features(audio_stream_file_path)
+                self._db_manager.save_audio_features(video_id, audio_features)
 
     def _read_url_file(self):
         with open(self._url_list_file_location, encoding='utf-8-sig') as csv_file:
