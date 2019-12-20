@@ -1,6 +1,6 @@
 import pandas as pd
 from ml_core.ml_ANN import ANN
-from ml_core.adv_ml_core import MLCore
+from ml_core.ml_core import MLCore
 import data_preprocessor.data_preprocessor as preproc
 
 
