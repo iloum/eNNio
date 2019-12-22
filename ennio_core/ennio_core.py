@@ -5,7 +5,6 @@ from config_manager.config_manager import ConfigManager
 from data_aquisitor.data_aquisitor import DataAquisitor
 from ennio_exceptions import VideoAlreadyExist, EnnIOException
 from db_manager.db_manager import DbManager
-from stream_splitter.stream_splitter import StreamSplitter
 from feature_extractor.video_feature_exractor import VideoFeatureExtractor
 from feature_extractor.audio_feature_extractor import AudioFeatureExtractor
 from ml_core.ml_core import MLCore
@@ -16,9 +15,9 @@ class EnnIOCore:
         self._config_manager = ConfigManager()
         self._data_aquisitor = DataAquisitor()
         self._db_manager = DbManager()
-        self._stream_splitter = StreamSplitter()
-        self._video_feature_extractor = VideoFeatureExtractor(None)
+        self._video_feature_extractor = VideoFeatureExtractor(None) #TODO: Should remove path from constructor
         self._audio_feature_extractor = AudioFeatureExtractor()
+        self._ml_core = MLCore(None) #TODO: Should remove path from constructor
         self._video_download_dir = None
         self._url_list_file_location = None
         self._video_stream_dir = None
@@ -27,11 +26,11 @@ class EnnIOCore:
     def setup(self):
         self._config_manager.read_config()
         self._video_download_dir = self._config_manager.get_field('video-download-dir')
+        self._video_stream_dir = os.path.join(self._video_download_dir, "video")
+        self._audio_stream_dir = os.path.join(self._video_download_dir, "audio")
         self._url_list_file_location = self._config_manager.get_field('urls-list-file')
         self._data_aquisitor.set_download_location(self._config_manager.get_field('video-download-dir'))
         self._db_manager.setup(self._config_manager.get_field('db-file'))
-        self._stream_splitter.set_video_stream_location(self._config_manager.get_field('video-stream-dir'))
-        self._stream_splitter.set_audio_stream_location(self._config_manager.get_field('audio-stream-dir'))
 
     def on_exit(self):
         self._db_manager.close_db()
@@ -118,13 +117,13 @@ class EnnIOCore:
             if video_features_exist_in_db and audio_feature_exist_in_db:
                 continue
 
-            audio_stream_file_path, video_stream_file_path = self._stream_splitter.split_video_file(file_path)
-
             if not video_features_exist_in_db:
+                video_stream_file_path = os.path.join(self._video_stream_dir, filename)
                 video_features, _ = self._video_feature_extractor.extract_video_features(video_stream_file_path)
                 self._db_manager.save_video_features(video_id, video_features)
 
             if not audio_feature_exist_in_db:
+                audio_stream_file_path = os.path.join(self._audio_stream_dir, filename)
                 audio_features, _ = self._audio_feature_extractor.extract_audio_features(audio_stream_file_path)
                 self._db_manager.save_audio_features(video_id, audio_features)
 
