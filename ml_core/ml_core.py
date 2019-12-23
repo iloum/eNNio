@@ -3,19 +3,24 @@ from ml_core.ml_ANN import ANN
 from utilities import file_management as fm
 
 class MLCore:
-    def __init__(self, mdl):
+    def __init__(self):
         '''
         Constructor
         :param mdl: the name of the model (string)
         '''
-        self.name = mdl
-        storedmodels = fm.getfiledictionary(path="D:\\Test\\models")  # to be changed
-        if mdl == "ANN":
-            if mdl in storedmodels.keys():  # if model exist, load it
-                self.modelclass = pickle.load(open(storedmodels[mdl], "rb"))
+        self.name = None
+        self.modelclass = None
+
+        pass
+
+    def create_model(self, model_name, model_path):
+        self.name = model_name
+        stored_models = fm.getfiledictionary(path=model_path)
+        if model_name == "ANN":
+            if model_name in stored_models.keys():  # if model exist, load it
+                self.modelclass = pickle.load(open(stored_models[model_name], "rb"))
             else:  # else create it
                 self.modelclass = ANN("ANN", batch_size=64, epochs=15, inputsize=554, outputsize=10)
-        pass
 
     def train_model(self, train_data):
         """

@@ -15,9 +15,9 @@ class EnnIOCore:
         self._config_manager = ConfigManager()
         self._data_aquisitor = DataAquisitor()
         self._db_manager = DbManager()
-        self._video_feature_extractor = VideoFeatureExtractor(None) #TODO: Should remove path from constructor
+        self._video_feature_extractor = VideoFeatureExtractor()
         self._audio_feature_extractor = AudioFeatureExtractor()
-        self._ml_core = MLCore(None) #TODO: Should remove path from constructor
+        self._ml_core = MLCore()
         self._video_download_dir = None
         self._url_list_file_location = None
         self._video_stream_dir = None
@@ -48,6 +48,10 @@ class EnnIOCore:
         self.download_video_from_url_file()
         self.extract_features(os.listdir(self._video_download_dir))
         #TODO: Call MLcore
+        where_models_will_be_saved = "IN THIS PATH"
+        self._ml_core.create_model("ANN", where_models_will_be_saved)
+        # ....
+        #TODO: To be corrected and changed or tell me what to do... :)
 
 
 

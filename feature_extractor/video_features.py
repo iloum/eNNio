@@ -5,7 +5,8 @@ extraction
 @author Theodoros Giannakopoulos {tyiannak@gmail.com}
 """
 import cv2
-import feature_extractor.visual_features
+from feature_extractor import visual_features
+# import feature_extractor.visual_features
 import numpy as np
 import tqdm
 
