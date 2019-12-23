@@ -1,10 +1,11 @@
 import configparser
 import os
 
+
 class ConfigManager:
     def __init__(self, path='.'):
-        self.config = configparser.ConfigParser()
-        self.config_file = os.path.join(path, "config.ini")
+        self._config = configparser.ConfigParser()
+        self._config_file = os.path.join(path, "config.ini")
 
     def get_field(self, field_name, label='GLOBAL'):
         """
@@ -13,7 +14,15 @@ class ConfigManager:
         :param label: Label under which field resides
         :return: Value of the field
         """
-        return self.config[label][field_name]
+        return self._config[label][field_name]
+
+    def get_all_fields(self, label='GLOBAL'):
+        """
+        Method to read a field from configuration file
+        :param label: Label under which field resides
+        :return: Dictionary containing all the configuration
+        """
+        return self._config[label]
 
     def set_field(self, field_name, value, label='GLOBAL'):
         """
@@ -23,18 +32,18 @@ class ConfigManager:
         :param label: Label under which field resides
         :return:
         """
-        self.config[label][field_name] = value
+        self._config[label][field_name] = value
         self.write_config()
 
     def _config_file_exists(self):
-        return os.path.exists(self.config_file)
+        return os.path.exists(self._config_file)
 
     def write_config(self):
         """
         Writes to config file
         """
-        with open(self.config_file, 'w') as configuration:
-            self.config.write(configuration)
+        with open(self._config_file, 'w') as configuration:
+            self._config.write(configuration)
 
     def read_config(self):
         """
@@ -44,14 +53,14 @@ class ConfigManager:
             self._setup_default_configuration()
             self.write_config()
         else:
-            self.config.read(self.config_file)
+            self._config.read(self._config_file)
 
     def _setup_default_configuration(self):
         """
         Creates default configuration
         Currently sets the language to English
         """
-        self.config['GLOBAL'] = {}
+        self._config['GLOBAL'] = {}
         self.set_field(field_name="urls-list-file",
                        value="url_list.csv")
         self.set_field(field_name="ml-model-file",
