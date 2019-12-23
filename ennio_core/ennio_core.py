@@ -31,6 +31,11 @@ class EnnIOCore:
         self._url_list_file_location = self._config_manager.get_field('urls-list-file')
         self._data_aquisitor.set_download_location(self._config_manager.get_field('video-download-dir'))
         self._db_manager.setup(self._config_manager.get_field('db-file'))
+        self._create_directories()
+
+    def _create_directories(self):
+        for directory in [self._audio_stream_dir, self._video_download_dir, self._video_stream_dir]:
+            os.makedirs(directory, exist_ok=True)
 
     def on_exit(self):
         self._db_manager.close_db()
