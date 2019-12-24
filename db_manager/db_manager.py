@@ -1,16 +1,18 @@
 import sqlalchemy as sql
 from sqlalchemy import exc
 from sqlalchemy.orm import create_session
+import numpy as np
 
-from db_manager.data_schema import Base, Clip, clip_header, audio_header
+from db_manager.data_schema import Base, Clip, clip_header, Audio, audio_header
 
 
-class ClipDbManager(object):
+class AudioDbManager(object):
     """
-    CLass that manages all DB operations
+        CLass that manages all Audio DB operations
     """
+
     def __init__(self, path="", db_name="eNNio_DB"):
-        self._db_name = self.validate_db_name(db_name)
+        self._db_name = db_name
         self.engine = sql.create_engine('sqlite:///{path}{db_name}.db'
                                         .format(path=path, db_name=self.db_name))
         self.session = create_session(bind=self.engine)
@@ -22,14 +24,98 @@ class ClipDbManager(object):
     def create_db(self):
         Base.metadata.create_all(self.engine)
 
-    def add_clip(self, **kwargs):
-        """
+    def add_audio(self, audio_id="", audio_features=np.zeros(66), audio_path=""):
+        new_audio = Audio(clip_id=audio_id, audio_features=audio_features.tostring(), audio_path=audio_path)
+        self.session.add(new_audio)
+        self.session.flush()
 
+    def audio_exists(self, audio_id):
+        return self.session.query(exists().where(Audio.clip_id == audio_id))
+
+    def get_by_id(self, audio_id):
+        q = self.session.query(Audio).filter(Audio.audio_id == audio_id)
+        p = dict.fromkeys(audio_header(), 0)
+        for col in clip_header():
+            if col == "audio_features":
+                p[col] = np.fromstring(q[col])
+            else:
+                p[col] = q[col]
+        return p
+
+    def save_clip(self):
+        self.session.flush()
+
+    def delete_clip_by_row(self, row):
+        self.session.delete(row)
+        self.session.flush()
+
+    def clear_table(self):
+        for row in self.get_all_audio():
+            self.session.delete(row)
+        self.session.flush()
+
+    def get_all_audio(self):
+        return self.session.query(Audio).all()
+
+    def cleanup(self):
+        self.session.close()
+
+    def dump_table(self):
         """
-        new_clip = Clip(**kwargs)
+        Dumps all entries to a 2-D array
+        :return: a tuple containing row entries as tuples
+        """
+        audios = self.get_all_audio()
+        table = list()
+        table.append(audio_header())
+        table.extend([audio.get_row() for audio in audios])
+        return tuple(table)
+
+
+class ClipDbManager(object):
+    """
+    CLass that manages all Clip DB operations
+    """
+
+    def __init__(self, path="", db_name="eNNio_DB"):
+        self._db_name = db_name
+        self.engine = sql.create_engine('sqlite:///{path}{db_name}.db'
+                                        .format(path=path, db_name=self.db_name))
+        self.session = create_session(bind=self.engine)
+
+    @property
+    def db_name(self):
+        return self._db_name
+
+    def create_db(self):
+        Base.metadata.create_all(self.engine)
+
+    def add_clip(self, clip_id="", url="",
+                 clip_title="", clip_description="", clip_path="", video_features=np.zeros(354), audio_from_clip=""):
+        new_clip = Clip(clip_id=clip_id, url=url, clip_title=clip_title,
+                        clip_description=clip_description,
+                        clip_path=clip_path, video_features=video_features.tostring(),
+                        audio_from_clip=audio_from_clip)
         self.session.add(new_clip)
         print(new_clip)
         self.session.flush()
+
+    def url_exists(self, url):
+        return self.session.query(exists().where(Clip.url == url))
+
+    def video_exists(self, video_id):
+        return self.session.query(exists().where(Clip.clip_id == video_id))
+
+    def get_by_id(self, clip_id=""):
+        q = self.session.query(Clip).filter(Clip.clip_id == clip_id).all()
+        p = dict.fromkeys(clip_header(), "0")
+        for record in q:
+            for col in clip_header():
+                if col == "video_features":
+                    p[col] = np.frombuffer(record.__dict__[col])
+                else:
+                    p[col] = record.__dict__[col]
+        return p
 
     def save_clip(self):
         self.session.flush()
@@ -49,9 +135,6 @@ class ClipDbManager(object):
     def cleanup(self):
         self.session.close()
 
-    def search_by_title(self, title):
-        return self.session.query(Clip).filter(Clip.clip_title.contains(title.upper())).all()
-
     def dump_table(self):
         """
         Dumps all entries to a 2-D array
@@ -62,16 +145,6 @@ class ClipDbManager(object):
         table.append(clip_header())
         table.extend([clip.get_row() for clip in clips])
         return tuple(table)
-
-    def import_clip_table(self, table):
-        """
-        Creates clip entries from a table and saves them to DB
-        :param table: a tuple of tuples containing clip attributes
-        """
-        attributes_to_index = self.get_indexes_for_clip_attributes(table[0])
-        clips = self.create_clips_from_table(attributes_to_index, table[1:])
-        self.session.add_all(clips)
-        self.session.flush()
 
     @staticmethod
     def get_indexes_for_clip_attributes(header):
@@ -108,4 +181,3 @@ class ClipDbManager(object):
         if not clip_args["author"] or not clip_args["title"]:
             raise exc.InvalidInputException
         return clip_args
-
