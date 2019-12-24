@@ -38,7 +38,11 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(p["clip_id"],"dyo")
 
     def test_get_video_features(self):
+        self.manager.add_clip(clip_id="dyo", url="youtube2", clip_title="2o clip",
+                              clip_description="poly oreo video", clip_path="C:/videos",
+                              video_features=np.ones(354))
         p = self.manager.get_by_id("dyo")
+        self.assertIs(type(p["video_features"]), np.ndarray)
 
 
 if __name__ == '__main__':
