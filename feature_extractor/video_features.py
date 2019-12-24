@@ -5,8 +5,7 @@ extraction
 @author Theodoros Giannakopoulos {tyiannak@gmail.com}
 """
 import cv2
-from feature_extractor import visual_features
-# import feature_extractor.visual_features
+import feature_extractor.visual_features as vf
 import numpy as np
 import tqdm
 
@@ -117,7 +116,7 @@ class VideoFeatureExtractor():
         n_frames = capture.get(cv2.CAP_PROP_FRAME_COUNT)
         fps = capture.get(cv2.CAP_PROP_FPS)
         duration, next_timestamp_proc = n_frames / fps, 0.0
-        vs = visual_features.ImageFeatureExtractor()
+        vs = vf.ImageFeatureExtractor()
         frames_to_process = int(duration/self.step)
         pbar = tqdm.tqdm(total=frames_to_process)
         features_all, timestamps, count = [], [], 0
