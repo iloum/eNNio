@@ -1,17 +1,17 @@
 import unittest
-from db_manager.db_manager import ClipDbManager, AudioDbManager
+from db_manager.db_manager import DbManager
 import numpy as np
 from os import path
 
 
 class MyTestCase(unittest.TestCase):
     def setUp(self):
-        self.manager = ClipDbManager()
+        self.manager = DbManager()
         self.manager.create_db()
         # self.assertEqual(True, False)
 
     def tearDown(self):
-        self.manager.clear_table()
+        self.manager.clear_clips_table()
         self.manager.cleanup()
 
     def add_a_clip(self):
@@ -34,15 +34,16 @@ class MyTestCase(unittest.TestCase):
         self.manager.add_clip(clip_id="dyo", url="youtube2", clip_title="2o clip",
                               clip_description="poly oreo video", clip_path="C:/videos",
                               video_features=np.ones(354))
-        p = self.manager.get_by_id(clip_id="dyo")
+        p = self.manager.get_clip_by_id(clip_id="dyo")
         self.assertEqual(p["clip_id"],"dyo")
 
     def test_get_video_features(self):
         self.manager.add_clip(clip_id="dyo", url="youtube2", clip_title="2o clip",
                               clip_description="poly oreo video", clip_path="C:/videos",
                               video_features=np.ones(354))
-        p = self.manager.get_by_id("dyo")
+        p = self.manager.get_clip_by_id("dyo")
         self.assertIs(type(p["video_features"]), np.ndarray)
+
 
 
 if __name__ == '__main__':

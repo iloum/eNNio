@@ -22,7 +22,6 @@ class Audio(Base):
         self.audio_id = audio_id
         self.audio_features = audio_features
         self.audio_path = audio_path.upper()
-        self.audio_title = audio_title.upper()
 
     def __repr__(self):
         return "{audio_id}, {audio_features},  {path}".format(
@@ -36,7 +35,7 @@ class Audio(Base):
 
 class Clip(Base):
     __tablename__ = 'clips'
-    id = sql.Column(sql.Integer, primary_key=True)
+    clip_id = sql.Column(sql.String, primary_key=True)
     clip_description = sql.Column(sql.String)
     clip_title = sql.Column(sql.String)
     url = sql.Column(sql.String)
