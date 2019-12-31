@@ -24,16 +24,16 @@ if __name__ == '__main__':
     parser.add_argument('-t',"--threads",type=int,help="number of threads to be used during cropping",default=2)
     args = parser.parse_args()
 
-    downloads_folder=os.path.join(args.outputfolder,"downloaded/")
-    parsed_folder=os.path.join(args.outputfolder,"parsed/")
+    downloads_folder=os.path.join(args.outputfolder,"downloaded")
+    parsed_folder=os.path.join(args.outputfolder,"parsed")
 
     create_folder(args.outputfolder)
     create_folder(downloads_folder)
     create_folder(parsed_folder)
-    create_folder(os.path.join(downloads_folder,"audio/"))
-    create_folder(os.path.join(downloads_folder,"video/"))
-    create_folder(os.path.join(parsed_folder,"audio/"))
-    create_folder(os.path.join(parsed_folder,"video/"))
+    create_folder(os.path.join(downloads_folder,"audio"))
+    create_folder(os.path.join(downloads_folder,"video"))
+    create_folder(os.path.join(parsed_folder,"audio"))
+    create_folder(os.path.join(parsed_folder,"video"))
     
     
     persisted_meta_f=os.path.join(args.outputfolder,".youtubelinks_meta")
@@ -144,14 +144,14 @@ if __name__ == '__main__':
                 print("checking consistency of parsed files")
                 
                 print("checking video files...")
-                parsed_video_filenames=cropper(filename_video,"video",timestamps,[parsed_folder,"video/"],args.threads)
+                parsed_video_filenames=cropper(filename_video,"video",timestamps,[parsed_folder,"video"],args.threads)
                 
                 print("checking audio files...")
-                parsed_audio_filenames=cropper(filename_audio,"audio",timestamps,[parsed_folder,"audio/"],args.threads)
+                parsed_audio_filenames=cropper(filename_audio,"audio",timestamps,[parsed_folder,"audio"],args.threads)
                  
             else:
-                parsed_video_filenames=cropper(filename_video,"video",timestamps,[parsed_folder,"video/"],args.threads)
-                parsed_audio_filenames=cropper(filename_audio,"audio",timestamps,[parsed_folder,"audio/"],args.threads)
+                parsed_video_filenames=cropper(filename_video,"video",timestamps,[parsed_folder,"video"],args.threads)
+                parsed_audio_filenames=cropper(filename_audio,"audio",timestamps,[parsed_folder,"audio"],args.threads)
             
 
             parsed_item['filenames']={"downloaded_audio":filename_audio,"downloaded_video":filename_video,

@@ -102,7 +102,7 @@ def depth(seq):
         return max_depth
     
 
-def cropper(source_filenames,filetype,timestamps,path_members,threads):
+def cropper(source_filename,filetype,timestamps,path_members,threads):
 
     if filetype=="video":
         stream_type="v"
@@ -114,7 +114,7 @@ def cropper(source_filenames,filetype,timestamps,path_members,threads):
 
     parsed_filenames=[]
     for timestamp in timestamps:
-        filename=get_filename(source_filenames,timestamp)
+        filename=get_filename(os.path.basename(source_filename),timestamp)
         if filepath_exists(path_members,filename):
             print(filetype,"already available for timestamps",timestamp,"..")
         else:
@@ -123,14 +123,14 @@ def cropper(source_filenames,filetype,timestamps,path_members,threads):
             if timestamp=="nocuts":
                 shutil.copyfile(filename,os.path.join(*path_members,new_filename))
             else:
-                cutout(source_filenames,timestamp,os.path.join(*path_members),stream_type,threads)
+                cutout(source_filename,timestamp,os.path.join(*path_members),stream_type,threads)
 
         parsed_filenames.append(filename)
     return parsed_filenames
 
 def get_filename(input_file,timestamps):
         outfilenames=[]
-        filename=input_file.split("/")[-1]
+        filename=os.path.basename(input_file)
         filename_parts=filename.split(".")
 
         if timestamps=="nocuts":
@@ -140,10 +140,10 @@ def get_filename(input_file,timestamps):
             listdepth=depth(timestamps)
 
             if listdepth==2:
-                new_filename=filename_parts[-2]+"_"+"_".join(["from:"+str(a)+"-"+"to:"+str(b) for a,b in timestamps])+"."+filename_parts[-1]
+                new_filename=filename_parts[-2]+"_"+"_".join(["from_"+str(a)+"-"+"to_"+str(b) for a,b in timestamps])+"."+filename_parts[-1]
             else:
                 a,b=timestamps
-                new_filename=filename_parts[-2]+"_from:"+str(a)+"-"+"to:"+str(b)+"."+filename_parts[-1]
+                new_filename=filename_parts[-2]+"_from_"+str(a)+"-"+"to_"+str(b)+"."+filename_parts[-1]
 
         return new_filename
 
@@ -280,7 +280,7 @@ def cutout(input_file,timestamps,output_folder,stream_type="v",Execute=True,thre
         build_concats=build_concats[:-1]
 
         #generate the filenames
-        new_filename=get_filename(input_file,timestamps)
+        new_filename=get_filename(os.path.basename(input_file),timestamps)
         output_file=os.path.join(output_folder,new_filename)
 
         build_concats+=f'" -map [out] '+f'"{output_file}"'
@@ -300,7 +300,7 @@ def cutout(input_file,timestamps,output_folder,stream_type="v",Execute=True,thre
         #remove the last semicolon.
         build_concats=build_concats[:-1]
 
-        new_filename=get_filename(input_file,timestamps)
+        new_filename=get_filename(os.path.basename(input_file),timestamps)
         output_file=os.path.join(output_folder,new_filename)
        
         build_concats+=f'" -map [s0] '+f'"{output_file}"'
