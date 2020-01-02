@@ -53,3 +53,10 @@ class AudioFeatureExtractor:
         else:
             return mid_features
 
+
+# testing stuff
+if __name__ == "__main__":
+        ae = AudioFeatureExtractor()
+        f, n = ae.extract_audio_features("D:\Data Science\eNNio\outputs\parsed\\audio\Ferris_Bueller_s_Day_Off_86_-_End_Credits-i_wrUmygRDA_from_182-to_281.m4a")
+        print(f)
+        print(n)
