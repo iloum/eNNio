@@ -10,10 +10,10 @@ class AudioFeatureExtractor:
 
     def extract_audio_features(self,
                                file_path,
-                               mid_window=1,
-                               mid_step=1,
-                               short_window=0.05,
-                               short_step=0.05,
+                               mid_window=5,
+                               mid_step=0.5,
+                               short_window=1,
+                               short_step=0.5,
                                get_names=False):
         """
         Method to extract audio features from an audio file
@@ -32,7 +32,8 @@ class AudioFeatureExtractor:
             print("   (EMPTY FILE -- SKIPPING)")
             # read sampling rate
         [sampling_rate, signal] = audioBasicIO.read_audio_file(file_path)
-
+        signal = audioBasicIO.stereo_to_mono(signal)
+        mid_term_features = np.array([])
         mid_features, short_features, mid_feature_names = \
             mid_feature_extraction(signal, sampling_rate,
                                    round(mid_window * sampling_rate),
@@ -47,9 +48,25 @@ class AudioFeatureExtractor:
                 (not np.isinf(mid_features).any()):
             mid_features = np.append(mid_features, beat)
             mid_features = np.append(mid_features, beat_conf)
-            mid_feature_names = mid_feature_names.append(["beat", "beat_conf"])
-        if get_names:
-            return mid_features, mid_feature_names
-        else:
-            return mid_features
+            mid_feature_names.append("beat")
+            mid_feature_names.append("beat_conf")
+            if len(mid_term_features) == 0:
+                # append feature vector
+                mid_term_features = mid_features
+            else:
+                mid_term_features = np.vstack((mid_term_features, mid_features))
 
+        if get_names:
+            return mid_term_features, mid_feature_names
+        else:
+            return mid_term_features
+
+
+# testing stuff
+if __name__ == "__main__":
+        ae = AudioFeatureExtractor()
+        f, n = ae.extract_audio_features("D:\\Output\\photosynthesis.wav", get_names=True)
+        print(f)
+        print(f.shape)
+        print(n)
+        print(len(n))
