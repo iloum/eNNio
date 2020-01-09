@@ -1,0 +1,4 @@
+pip install youtube-dl
+
+additional requirements for windows users:
+https://ytdl-org.github.io/youtube-dl/download.html
