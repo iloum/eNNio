@@ -104,6 +104,16 @@ def main(args):
             skip_download=False
             skip_parsing=False
 
+
+        if new_entry:
+                persisted_meta[parsed_item['link']]={
+                "link":parsed_item['link'],
+                'specs':parsed_item['specs'],
+                'filenames':[],
+                'timestamps':[]
+                #'comments':parsed_item['comment']
+                } 
+
         if skip_download or skip_parsing:
             print("found an item registered using the same link")
         try:
@@ -152,6 +162,7 @@ def main(args):
             parsed_item['filenames']={"downloaded_audio":filename_audio,"downloaded_video":filename_video,
             "parsed_video":parsed_video_filenames,"parsed_audio":parsed_audio_filenames}
             
+
             if new_entry:
                 persisted_meta[parsed_item['link']]={
                 "link":parsed_item['link'],

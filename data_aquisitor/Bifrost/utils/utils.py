@@ -140,10 +140,10 @@ def get_filename(input_file,timestamps):
             listdepth=depth(timestamps)
 
             if listdepth==2:
-                new_filename=filename_parts[-2]+"_"+"_".join(["from_"+str(a)+"-"+"to_"+str(b) for a,b in timestamps])+"."+filename_parts[-1]
+                new_filename=filename_parts[-2]+"-"+"_".join(["from_"+str(a)+"-"+"to_"+str(b) for a,b in timestamps])+"."+filename_parts[-1]
             else:
                 a,b=timestamps
-                new_filename=filename_parts[-2]+"_from_"+str(a)+"-"+"to_"+str(b)+"."+filename_parts[-1]
+                new_filename=filename_parts[-2]+"-from_"+str(a)+"-"+"to_"+str(b)+"."+filename_parts[-1]
 
         return new_filename
 
@@ -154,8 +154,8 @@ def download_ytbvideo(Youtube_Link,filetype,output_folder,specs={"res":144,"fps"
         print("sleeping for "+sleep)
         time.sleep(sleep)
     
-    aoutput_template=os.path.join(output_folder,"audio/",r"%(title)s-%(id)s.%(ext)s")
-    voutput_template=os.path.join(output_folder,"video/",r"%(title)s-%(id)s.%(ext)s")
+    aoutput_template=os.path.join(output_folder,"audio/",r"title_%(title)s-id_%(id)s-specs_%(abr)s.%(ext)s")
+    voutput_template=os.path.join(output_folder,"video/",r"title_%(title)s-id_%(id)s-specs_%(resolution)s_%(fps)s.%(ext)s")
     vdl_command= ' -o "{output_template}"  --restrict-filenames -f "bestvideo[height<={res}][fps<={fps}]" "{link}"'
     adl_command= ' -o "{output_template}"  --restrict-filenames -f "bestaudio[abr<={abr}]" "{link}"'
 
