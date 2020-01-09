@@ -1,8 +1,0 @@
-
-to run..
-
-*filename is the list of urls timestamps etc..
-*outputfolder is the path where you want to store the files/ folders
-*threads is the number of threads you want to devote for video cropping.
-
-./get_videos.py --filename=url_list.csv --outputfolder=outputs --threads=5
