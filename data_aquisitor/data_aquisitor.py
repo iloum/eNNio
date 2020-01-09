@@ -95,5 +95,8 @@ if __name__ == '__main__':
     da.download_from_url("https://www.youtube.com/watch?v=TYPp-DkuLwg")
     print(da.get_metadata())
 
+    da.download_from_url("https://www.youtube.com/watch?v=TYPp-DkuLwg","00:05","01:00")
+    print(da.get_metadata())
+
     da.download_from_csv("./sample_url_list.csv")
     print(da.get_metadata())
