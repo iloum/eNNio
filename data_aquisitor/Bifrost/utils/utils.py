@@ -128,10 +128,16 @@ def cropper(source_filename,filetype,timestamps,path_members,threads):
         parsed_filenames.append(filename)
     return parsed_filenames
 
-def get_filename(input_file,timestamps):
+def get_filename(input_file,timestamps,ext=None):
+        '''
+        returns the filename, if provided the extension will overwrite the previous file extension
+        '''
         outfilenames=[]
         filename=os.path.basename(input_file)
         filename_parts=filename.split(".")
+
+        if ext:
+            filename_parts[-1]=ext
 
         if timestamps=="nocuts":
             new_filename=filename_parts[-2]+"_nocuts"+"."+filename_parts[-1]
@@ -280,7 +286,11 @@ def cutout(input_file,timestamps,output_folder,stream_type="v",Execute=True,thre
         build_concats=build_concats[:-1]
 
         #generate the filenames
-        new_filename=get_filename(os.path.basename(input_file),timestamps)
+        if stream_type=="v":
+            new_filename=get_filename(os.path.basename(input_file),timestamps,"mp4")
+        else:
+            new_filename=get_filename(os.path.basename(input_file),timestamps,"wav")
+            
         output_file=os.path.join(output_folder,new_filename)
 
         build_concats+=f'" -map [out] '+f'"{output_file}"'
@@ -300,7 +310,11 @@ def cutout(input_file,timestamps,output_folder,stream_type="v",Execute=True,thre
         #remove the last semicolon.
         build_concats=build_concats[:-1]
 
-        new_filename=get_filename(os.path.basename(input_file),timestamps)
+        if stream_type=="v":
+            new_filename=get_filename(os.path.basename(input_file),timestamps,"mp4")
+        else:
+            new_filename=get_filename(os.path.basename(input_file),timestamps,"wav")
+
         output_file=os.path.join(output_folder,new_filename)
        
         build_concats+=f'" -map [s0] '+f'"{output_file}"'
