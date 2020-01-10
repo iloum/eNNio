@@ -114,7 +114,14 @@ def cropper(source_filename,filetype,timestamps,path_members,threads):
 
     parsed_filenames=[]
     for timestamp in timestamps:
-        filename=get_filename(os.path.basename(source_filename),timestamp)
+
+        if filetype=="video":
+            filename=get_filename(os.path.basename(source_filename),timestamp,"mp4")
+        elif filetype=="audio":
+            filename=get_filename(os.path.basename(source_filename),timestamp,"wav")
+        else:
+            filename=get_filename(os.path.basename(source_filename),timestamp)
+
         if filepath_exists(path_members,filename):
             print(filetype,"already available for timestamps",timestamp,"..")
         else:
@@ -288,9 +295,11 @@ def cutout(input_file,timestamps,output_folder,stream_type="v",Execute=True,thre
         #generate the filenames
         if stream_type=="v":
             new_filename=get_filename(os.path.basename(input_file),timestamps,"mp4")
-        else:
+        elif stream_type=="a":
             new_filename=get_filename(os.path.basename(input_file),timestamps,"wav")
-            
+        else:
+            new_filename=get_filename(os.path.basename(input_file),timestamps)
+
         output_file=os.path.join(output_folder,new_filename)
 
         build_concats+=f'" -map [out] '+f'"{output_file}"'
@@ -312,8 +321,10 @@ def cutout(input_file,timestamps,output_folder,stream_type="v",Execute=True,thre
 
         if stream_type=="v":
             new_filename=get_filename(os.path.basename(input_file),timestamps,"mp4")
-        else:
+        elif stream_type=="a":
             new_filename=get_filename(os.path.basename(input_file),timestamps,"wav")
+        else:
+            new_filename=get_filename(os.path.basename(input_file),timestamps)
 
         output_file=os.path.join(output_folder,new_filename)
        

@@ -49,6 +49,7 @@ def main(args):
     with open(args.filename) as csv_file:
         csv_data = list(csv.DictReader(csv_file, delimiter='|'))
 
+    onego_metalist=[]
     for indexi,rawitem in enumerate(csv_data):
         print("\n\n")
         print("*** processing link ", rawitem['link']," ***")
@@ -192,6 +193,8 @@ def main(args):
 
                 #persisted_meta[parsed_item['link']]['filenames']['comments'].extend(parsed_item["comment"])
         
+            onego_metalist.append(persisted_meta[parsed_item['link']])
+        
         except KeyboardInterrupt:
             with open(persisted_meta_f,'w') as f:
                 writer=f.write(json.dumps(persisted_meta))
@@ -236,7 +239,7 @@ def main(args):
                 f.write("input"+str(indexi)+":"+badinput)
                 f.write(error)
 
-    return persisted_meta
+    return persisted_meta,onego_metalist
 
 
 if __name__ == '__main__':

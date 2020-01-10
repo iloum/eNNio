@@ -39,9 +39,10 @@ class DataAquisitor:
             f.write(dummy_csv_body)
             f.seek(0)
             videoargs=args(f.name,self._download_location,threads)
-            metadata=get_videos.main(videoargs)
+            persisted_metadata,onego_metadata=get_videos.main(videoargs)
 
-        self.set_metadata(metadata)
+        self.set_metadata(persisted_metadata)
+        return onego_metadata
 
 
     def download_from_url_2(self, url, timeslices=[[]]):
@@ -78,9 +79,10 @@ class DataAquisitor:
         """
         args=namedtuple("args","filename outputfolder threads")
         videoargs=args(csv_path,self._download_location,threads)
-        metadata=get_videos.main(videoargs)
+        persisted_metadata,onego_metadata=get_videos.main(videoargs)
 
-        self.set_metadata(metadata)
+        self.set_metadata(persisted_metadata)
+        return onego_metadata
 
     def get_metadata(self):
         """
@@ -92,11 +94,21 @@ class DataAquisitor:
 if __name__ == '__main__':
     da=DataAquisitor()
     da.set_download_location("./outputs")
-    da.download_from_url("https://www.youtube.com/watch?v=TYPp-DkuLwg")
+    
+    print("test1")
+    meta=da.download_from_url("https://www.youtube.com/watch?v=TYPp-DkuLwg")
+    print(meta)
+    print("-------")
     print(da.get_metadata())
 
-    da.download_from_url("https://www.youtube.com/watch?v=TYPp-DkuLwg","00:05","01:00")
+    print("test2")
+    meta=da.download_from_url("https://www.youtube.com/watch?v=TYPp-DkuLwg","00:05","01:00")
+    print(meta)
+    print("-------")
     print(da.get_metadata())
 
-    da.download_from_csv("./sample_url_list.csv")
+    print("test3")
+    meta=da.download_from_csv("./sample_url_list.csv")
+    print(meta)
+    print("-------")
     print(da.get_metadata())
