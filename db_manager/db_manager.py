@@ -2,6 +2,7 @@ import sqlalchemy as sql
 from sqlalchemy import exc, exists
 from sqlalchemy.orm import create_session
 import numpy as np
+import os
 
 from db_manager.data_schema import Base, Clip, clip_header, Audio, audio_header
 
@@ -11,11 +12,17 @@ class DbManager(object):
     CLass that manages all DB operations
     """
 
-    def __init__(self, path="", db_name="eNNio_DB"):
-        self._db_name = db_name
-        self.engine = sql.create_engine('sqlite:///{path}{db_name}.db'
-                                        .format(path=path, db_name=self.db_name))
+    def __init__(self):
+        self._db_name = None
+        self.engine = None
+        self.session = None
+
+    def setup(self, db_file):
+        self._db_name = os.path.basename(db_file)
+        self.engine = sql.create_engine('sqlite:///{db_file}'
+                                        .format(db_file=db_file))
         self.session = create_session(bind=self.engine)
+        self.create_db()
 
     @property
     def db_name(self):

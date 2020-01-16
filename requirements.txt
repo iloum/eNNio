@@ -13,4 +13,5 @@ tqdm
 keras
 pandas
 tensorflow
-
+youtube_dl==2020.1.15
+ffmpeg==1.4

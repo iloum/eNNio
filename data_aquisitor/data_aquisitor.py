@@ -1,4 +1,4 @@
-from Bifrost import get_videos
+from data_aquisitor.Bifrost import get_videos
 import time
 import tempfile
 from collections import namedtuple

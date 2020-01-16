@@ -1,6 +1,7 @@
 import os
 import hashlib
 import csv
+import multiprocessing
 from config_manager.config_manager import ConfigManager
 from data_aquisitor.data_aquisitor import DataAquisitor
 from ennio_exceptions import VideoAlreadyExist, EnnIOException
@@ -26,19 +27,21 @@ class EnnIOCore:
     def setup(self):
         self._config_manager.read_config()
         self._video_download_dir = self._config_manager.get_field('video-download-dir')
-        self._video_stream_dir = os.path.join(self._video_download_dir, "video")
-        self._audio_stream_dir = os.path.join(self._video_download_dir, "audio")
+        parsed_dir = os.path.join(self._video_download_dir, 'parsed')
+        self._video_stream_dir = os.path.join(parsed_dir, 'video')
+        self._audio_stream_dir = os.path.join(parsed_dir, 'audio')
         self._url_list_file_location = self._config_manager.get_field('urls-list-file')
         self._data_aquisitor.set_download_location(self._config_manager.get_field('video-download-dir'))
         self._db_manager.setup(self._config_manager.get_field('db-file'))
         self._create_directories()
 
     def _create_directories(self):
-        for directory in [self._audio_stream_dir, self._video_download_dir, self._video_stream_dir]:
+        for directory in [self._audio_stream_dir, self._video_download_dir,
+                          self._video_stream_dir]:
             os.makedirs(directory, exist_ok=True)
 
     def on_exit(self):
-        self._db_manager.close_db()
+        self._db_manager.cleanup()
 
     def construct_model(self):
         """
@@ -84,8 +87,8 @@ class EnnIOCore:
             url = row['URL']
             start_time = row['Start']
             end_time = row['End']
-            if self._db_manager.is_url_in_db(url):
-                continue
+            # if self._db_manager.is_url_in_db(url):
+            #     continue
             try:
                 file_path = self._download_video_from_entry(url, start_time, end_time)
                 downloaded_videos.append(file_path)
@@ -96,11 +99,36 @@ class EnnIOCore:
         return downloaded_videos, failed_videos
 
     def _download_video_from_entry(self, url, start_time, end_time):
-        filename = self._data_aquisitor.download_from_url(url, start_time=start_time, end_time=end_time)
-        file_path = os.path.join(self._video_download_dir, filename)
-        video_id = self._get_video_id(file_path)
-        self._db_manager.save_video_data(video_id, filename, file_path, url)
-        return file_path
+        available_cpus = multiprocessing.cpu_count()
+        if available_cpus > 1:
+            available_cpus -= 1
+        temp = self._data_aquisitor.download_from_url(url,
+                                                      start_time=start_time,
+                                                      end_time=end_time,
+                                                      threads=available_cpus)
+        if not temp:
+            raise EnnIOException
+        metadata = temp[-1]
+        print(metadata)
+        video_stream_name = os.path.basename(metadata['filenames'][
+                                                 'parsed_video'][-1])
+        audio_stream_name = os.path.basename(metadata['filenames'][
+                                                 'parsed_audio'][-1])
+        video_file_path = os.path.join(self._video_stream_dir,
+                                       video_stream_name)
+        audio_file_path = os.path.join(self._audio_stream_dir,
+                                       audio_stream_name)
+        video_stream_id = self._get_id(video_file_path)
+        audio_stream_id = self._get_id(audio_file_path)
+        start_time = metadata['timestamps'][-1][-1][0]
+        end_time = metadata['timestamps'][-1][-1][1]
+        # self._db_manager.add_audio(audio_id=audio_stream_id,
+        #                            audio_path=audio_file_path)
+        # self._db_manager.add_clip(clip_id=video_stream_id,
+        #                           url=url,
+        #                           clip_path=video_file_path,
+        #                           clip_title=video_stream_name)
+        return video_file_path
 
     def get_status(self):
         """
@@ -115,7 +143,7 @@ class EnnIOCore:
         :param filenames: List of file names to be used
         """
         for filename in filenames:
-            file_path = os.path.join(self._video_download_dir, filename)
+            file_path = os.path.join(self._video_stream_dir, filename)
             if not os.path.isfile(file_path):
                 continue
 
@@ -142,7 +170,7 @@ class EnnIOCore:
                 yield row
 
     @staticmethod
-    def _get_video_id(file_path):
+    def _get_id(file_path):
         BLOCKSIZE = 65536
         hasher = hashlib.md5()
         with open(file_path, 'rb') as f:
