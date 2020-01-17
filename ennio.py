@@ -56,13 +56,27 @@ class UserInterface(Cmd):
         if not re.match(VALID_URL, args):
             print("Not valid url")
             return
-        self.ennio_core.download_video_from_url(url=args)
+        file_path = self.ennio_core.download_video_from_url(url=args)
+        if file_path:
+            print('Downloaded files')
+            print(file_path)
+        else:
+            print('Failed to download')
+            print(args)
 
     def do_download_video_from_url_file(self, args):
         """
         Download Youtube video from url CSV
         """
-        self.ennio_core.download_video_from_url_file()
+        downloaded, failed = self.ennio_core.download_video_from_url_file()
+        print('Downloaded files')
+        for f in downloaded:
+            print(f)
+        print()
+        print('Failed to download')
+        for f in failed:
+            print(f)
+        print()
 
     def do_show_status(self, args):
         """

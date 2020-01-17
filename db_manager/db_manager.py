@@ -21,8 +21,8 @@ class DbManager(object):
         self._db_name = os.path.basename(db_file)
         self.engine = sql.create_engine('sqlite:///{db_file}'
                                         .format(db_file=db_file))
-        self.session = create_session(bind=self.engine)
         self.create_db()
+        self.session = create_session(bind=self.engine)
 
     @property
     def db_name(self):
@@ -38,11 +38,16 @@ class DbManager(object):
         self.session.close()
 
     #CLIPS
-    def add_clip(self, clip_id="", url="",
-                 clip_title="", clip_description="", clip_path="", video_features=np.zeros(354), audio_from_clip=""):
-        new_clip = Clip(clip_id=clip_id, url=url, clip_title=clip_title,
+    def add_clip(self, clip_id="", url="", start_time=0, end_time=0,
+                 clip_title="", clip_description="", clip_path="",
+                 video_features=None, audio_from_clip=""):
+        new_clip = Clip(clip_id=clip_id, url=url,
+                        start_time=start_time, end_time=end_time,
+                        clip_title=clip_title,
                         clip_description=clip_description,
-                        clip_path=clip_path, video_features=video_features.tostring(),
+                        clip_path=clip_path,
+                        video_features=video_features.tostring() if
+                        video_features else "",
                         audio_from_clip=audio_from_clip)
         self.session.add(new_clip)
         self.session.flush()
@@ -104,9 +109,11 @@ class DbManager(object):
         return clip_args
 
     #AUDIO
-
-    def add_audio(self, audio_id="", audio_features=np.zeros(66), audio_path=""):
-        new_audio = Audio(audio_id=audio_id, audio_features=audio_features.tostring(), audio_path=audio_path)
+    def add_audio(self, audio_id="", audio_features=None, audio_path=""):
+        new_audio = Audio(audio_id=audio_id,
+                          audio_features=audio_features.tostring() if
+                          audio_features else "",
+                          audio_path=audio_path)
         self.session.add(new_audio)
         self.session.flush()
 

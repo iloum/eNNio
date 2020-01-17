@@ -73,8 +73,10 @@ class EnnIOCore:
         :param url: A youtube video URL
         :return: Downloaded file name
         """
-        filename = self._data_aquisitor.download_from_url(url)
-        return filename
+        try:
+            return self._download_video_from_entry(url, None, None)
+        except EnnIOException:
+            return
 
     def download_video_from_url_file(self):
         """
@@ -87,8 +89,8 @@ class EnnIOCore:
             url = row['URL']
             start_time = row['Start']
             end_time = row['End']
-            # if self._db_manager.is_url_in_db(url):
-            #     continue
+            if self._db_manager.url_exists(url):
+                continue
             try:
                 file_path = self._download_video_from_entry(url, start_time, end_time)
                 downloaded_videos.append(file_path)
@@ -109,7 +111,6 @@ class EnnIOCore:
         if not temp:
             raise EnnIOException
         metadata = temp[-1]
-        print(metadata)
         video_stream_name = os.path.basename(metadata['filenames'][
                                                  'parsed_video'][-1])
         audio_stream_name = os.path.basename(metadata['filenames'][
@@ -122,12 +123,14 @@ class EnnIOCore:
         audio_stream_id = self._get_id(audio_file_path)
         start_time = metadata['timestamps'][-1][-1][0]
         end_time = metadata['timestamps'][-1][-1][1]
-        # self._db_manager.add_audio(audio_id=audio_stream_id,
-        #                            audio_path=audio_file_path)
-        # self._db_manager.add_clip(clip_id=video_stream_id,
-        #                           url=url,
-        #                           clip_path=video_file_path,
-        #                           clip_title=video_stream_name)
+        self._db_manager.add_audio(audio_id=audio_stream_id,
+                                   audio_path=audio_file_path)
+        self._db_manager.add_clip(clip_id=video_stream_id,
+                                  url=url,
+                                  start_time=start_time,
+                                  end_time=end_time,
+                                  clip_path=video_file_path,
+                                  clip_title=video_stream_name)
         return video_file_path
 
     def get_status(self):
@@ -135,7 +138,13 @@ class EnnIOCore:
         Method to display systems status
         :return:
         """
-        pass
+        print("CLIPS TABLE")
+        for entry in self._db_manager.dump_clips():
+            print(entry)
+
+        print("AUDIO TABLE")
+        for entry in self._db_manager.dump_audio_table():
+            print(entry)
 
     def extract_features(self, filenames):
         """
