@@ -130,8 +130,9 @@ class DbManager(object):
         #     else:
         #         p[col] = q[col]
         # return p
+
         return self.session.query(Audio).filter(Audio.audio_id ==
-                                               audio_id).all()
+                                               audio_id).first()
 
     def clear_audio_table(self):
         for row in self.get_all_audio():

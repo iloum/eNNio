@@ -158,7 +158,6 @@ class EnnIOCore:
             file_path = clip.clip_path
             if not os.path.isfile(file_path):
                 continue
-            print(clip)
             audio = self._db_manager.get_audio_by_id(clip.audio_from_clip)
             video_features_exist_in_db = clip.video_features != ""
             audio_feature_exist_in_db = audio.audio_features != ""
@@ -174,7 +173,7 @@ class EnnIOCore:
                 video_features_extracted.append(clip.clip_path)
 
             if not audio_feature_exist_in_db:
-                audio_features, _ = \
+                audio_features = \
                     self._audio_feature_extractor.extract_audio_features(
                         audio.audio_path)
                 audio.audio_features = audio_features.tostring()
