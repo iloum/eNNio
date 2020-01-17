@@ -61,13 +61,9 @@ class ConfigManager:
         Currently sets the language to English
         """
         self._config['GLOBAL'] = {}
+        self.set_field(field_name="data-folder",
+                       value="data")
         self.set_field(field_name="urls-list-file",
                        value="url_list.csv")
-        self.set_field(field_name="ml-model-file",
-                       value="data/model.sav")
-        self.set_field(field_name="db-file",
-                       value="data/ennIO.db")
-        self.set_field(field_name="video-download-dir",
-                       value="data/downloads/")
-        self.set_field(field_name="output-dir",
-                       value="data/output/")
+        self.set_field(field_name="db-file-name",
+                       value="ennIO.db")
