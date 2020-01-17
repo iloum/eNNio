@@ -130,7 +130,8 @@ class EnnIOCore:
                                   start_time=start_time,
                                   end_time=end_time,
                                   clip_path=video_file_path,
-                                  clip_title=video_stream_name)
+                                  clip_title=video_stream_name,
+                                  audio_from_clip=audio_stream_id)
         return video_file_path
 
     def get_status(self):
@@ -146,32 +147,42 @@ class EnnIOCore:
         for entry in self._db_manager.dump_audio_table():
             print(entry)
 
-    def extract_features(self, filenames):
+    def extract_features(self):
         """
         Method to extract audio and video features from files
-        :param filenames: List of file names to be used
         """
-        for filename in filenames:
-            file_path = os.path.join(self._video_stream_dir, filename)
+        video_features_extracted = []
+        audio_features_extracted = []
+
+        for clip in self._db_manager.get_all_clips():
+            file_path = clip.clip_path
             if not os.path.isfile(file_path):
                 continue
-
-            video_id = self._get_video_id(file_path)
-            video_features_exist_in_db = self._db_manager.video_features_exist_in_db(video_id)
-            audio_feature_exist_in_db = self._db_manager.audio_features_exist_in_db(video_id)
+            print(clip)
+            audio = self._db_manager.get_audio_by_id(clip.audio_from_clip)
+            video_features_exist_in_db = clip.video_features != ""
+            audio_feature_exist_in_db = audio.audio_features != ""
 
             if video_features_exist_in_db and audio_feature_exist_in_db:
                 continue
 
             if not video_features_exist_in_db:
-                video_stream_file_path = os.path.join(self._video_stream_dir, filename)
-                video_features, _ = self._video_feature_extractor.extract_video_features(video_stream_file_path)
-                self._db_manager.save_video_features(video_id, video_features)
+                video_features, _ = \
+                    self._video_feature_extractor.extract_video_features(
+                        clip.clip_path)
+                clip.video_features = video_features.tostring()
+                video_features_extracted.append(clip.clip_path)
 
             if not audio_feature_exist_in_db:
-                audio_stream_file_path = os.path.join(self._audio_stream_dir, filename)
-                audio_features, _ = self._audio_feature_extractor.extract_audio_features(audio_stream_file_path)
-                self._db_manager.save_audio_features(video_id, audio_features)
+                audio_features, _ = \
+                    self._audio_feature_extractor.extract_audio_features(
+                        audio.audio_path)
+                audio.audio_features = audio_features.tostring()
+                audio_features_extracted.append(audio.audio_path)
+
+            self._db_manager.save_clip()
+        return video_features_extracted, audio_features_extracted
+
 
     def _read_url_file(self):
         with open(self._url_list_file_location, encoding='utf-8-sig') as csv_file:

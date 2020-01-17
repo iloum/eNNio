@@ -87,12 +87,18 @@ class UserInterface(Cmd):
     def do_extract_features(self, args):
         """
         Extract audio and video features from downloaded file
-        Usage: extract_features <filename> <filename> ...
+        Usage: extract_features
         """
-        if not args:
-            print("Video file names needed for feature extraction")
-        self.ennio_core.extract_features(filenames=args.split())
 
+        video_extracted, audio_extracted = self.ennio_core.extract_features()
+        print('Video features extracted for:')
+        for f in video_extracted:
+            print(f)
+        print()
+        print('Audio features extracted for:')
+        for f in audio_extracted:
+            print(f)
+        print()
 
 if __name__=='__main__':
     # try:

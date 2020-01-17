@@ -53,7 +53,8 @@ class DbManager(object):
         self.session.flush()
 
     def url_exists(self, url):
-        return self.session.query(exists().where(Clip.url == url))
+        clips = self.session.query(Clip).filter_by(url=url).all()
+        return True if clips else False
 
     def video_exists(self, video_id):
         return self.session.query(exists().where(Clip.clip_id == video_id))
@@ -121,14 +122,16 @@ class DbManager(object):
         return self.session.query(exists().where(Audio.clip_id == audio_id))
 
     def get_audio_by_id(self, audio_id):
-        q = self.session.query(Audio).filter(Audio.audio_id == audio_id)
-        p = dict.fromkeys(audio_header(), 0)
-        for col in clip_header():
-            if col == "audio_features":
-                p[col] = np.fromstring(q[col])
-            else:
-                p[col] = q[col]
-        return p
+        # q = self.session.query(Audio).filter(Audio.audio_id == audio_id)
+        # p = dict.fromkeys(audio_header(), 0)
+        # for col in clip_header():
+        #     if col == "audio_features":
+        #         p[col] = np.fromstring(q[col])
+        #     else:
+        #         p[col] = q[col]
+        # return p
+        return self.session.query(Audio).filter(Audio.audio_id ==
+                                               audio_id).all()
 
     def clear_audio_table(self):
         for row in self.get_all_audio():
