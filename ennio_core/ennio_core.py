@@ -155,8 +155,7 @@ class EnnIOCore:
         audio_features_extracted = []
 
         for clip in self._db_manager.get_all_clips():
-            file_path = clip.clip_path
-            if not os.path.isfile(file_path):
+            if not os.path.isfile(clip.clip_path):
                 continue
             audio = self._db_manager.get_audio_by_id(clip.audio_from_clip)
             video_features_exist_in_db = clip.video_features != ""
@@ -166,18 +165,22 @@ class EnnIOCore:
                 continue
 
             if not video_features_exist_in_db:
+                print("Extracting video features from file: {}".format(os.path.basename(clip.clip_path)))
                 video_features, _ = \
                     self._video_feature_extractor.extract_video_features(
-                        clip.clip_path)
+                        clip.clip_path, ["lbps", "hogs", "colors"])
                 clip.video_features = video_features.tostring()
                 video_features_extracted.append(clip.clip_path)
+                print("Done")
 
             if not audio_feature_exist_in_db:
+                print("Extracting audio features from file: {}".format(os.path.basename(audio.audio_path)))
                 audio_features = \
                     self._audio_feature_extractor.extract_audio_features(
                         audio.audio_path)
                 audio.audio_features = audio_features.tostring()
                 audio_features_extracted.append(audio.audio_path)
+                print("Done")
 
             self._db_manager.save_clip()
         return video_features_extracted, audio_features_extracted
@@ -198,3 +201,9 @@ class EnnIOCore:
                 hasher.update(buf)
                 buf = f.read(BLOCKSIZE)
         return hasher.hexdigest()
+
+    def drop(self, option):
+        if option == "audio_features":
+            self._db_manager.clear_audio_features()
+        if option == "video_features":
+            self._db_manager.clear_video_features()

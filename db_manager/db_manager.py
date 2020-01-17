@@ -75,6 +75,11 @@ class DbManager(object):
             self.session.delete(row)
         self.session.flush()
 
+    def clear_video_features(self):
+        for row in self.get_all_clips():
+            row.video_features = ""
+        self.session.flush()
+
     def get_all_clips(self):
         return self.session.query(Clip).all()
 
@@ -137,6 +142,11 @@ class DbManager(object):
     def clear_audio_table(self):
         for row in self.get_all_audio():
             self.session.delete(row)
+        self.session.flush()
+
+    def clear_audio_features(self):
+        for row in self.get_all_audio():
+            row.audio_features = ""
         self.session.flush()
 
     def get_all_audio(self):

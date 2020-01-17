@@ -91,14 +91,20 @@ class UserInterface(Cmd):
         """
 
         video_extracted, audio_extracted = self.ennio_core.extract_features()
-        print('Video features extracted for:')
-        for f in video_extracted:
-            print(f)
-        print()
-        print('Audio features extracted for:')
-        for f in audio_extracted:
-            print(f)
-        print()
+        print('Video features extracted from {} clips'.format(len(video_extracted)))
+        print('Audio features extracted from {} clips'.format(len(audio_extracted)))
+
+    def do_drop(self, args):
+        """
+        Drop information from db
+        Usage: drop [audio_features] [video_features]
+        """
+        if not args:
+            print("Please give one or more options")
+            return
+
+        for option in args.split():
+            self.ennio_core.drop(option)
 
 if __name__=='__main__':
     # try:
