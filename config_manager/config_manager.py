@@ -67,3 +67,28 @@ class ConfigManager:
                        value="url_list.csv")
         self.set_field(field_name="db-file-name",
                        value="ennIO.db")
+
+        self._config['VIDEO'] = {}
+        self.set_field(field_name="feature-types",
+                       value='["lbps", "hogs", "colors"]',
+                       label='VIDEO')
+        self.set_field(field_name="resize-width",
+                       value="300",
+                       label='VIDEO')
+        self.set_field(field_name="step",
+                       value="3",
+                       label='VIDEO')
+
+        self._config['AUDIO'] = {}
+        self.set_field(field_name="mid-term-window",
+                       value='5',
+                       label='AUDIO')
+        self.set_field(field_name="mid-term-step",
+                       value='0.5',
+                       label='AUDIO')
+        self.set_field(field_name="short-term-window",
+                       value='1',
+                       label='AUDIO')
+        self.set_field(field_name="short-term-step",
+                       value='0.5',
+                       label='AUDIO')

@@ -153,12 +153,27 @@ class EnnIOCore:
         for entry in self._db_manager.dump_audio_table():
             print(entry)
 
+    def _get_video_extractor_config(self):
+        config = self._config_manager.get_all_fields(label='VIDEO')
+        return {"ftlist": eval(config["feature-types"]),
+                "width": int(config["resize-width"]),
+                "step": int(config["step"])}
+
+    def _get_audio_extractor_config(self):
+        config = self._config_manager.get_all_fields(label='AUDIO')
+        return {"mid_window": int(config["mid-term-window"]),
+               "mid_step": float(config["mid-term-step"]),
+               "short_window": int(config["short-term-window"]),
+               "short_step": float(config["short-term-step"])}
+
     def extract_features(self):
         """
         Method to extract audio and video features from files
         """
         video_features_extracted = []
         audio_features_extracted = []
+        video_extractor_kw_args = self._get_video_extractor_config()
+        audio_extractor_kw_args = self._get_audio_extractor_config()
 
         for clip in self._db_manager.get_all_clips():
             if not os.path.isfile(clip.clip_path):
@@ -174,7 +189,7 @@ class EnnIOCore:
                 print("Extracting video features from file: {}".format(os.path.basename(clip.clip_path)))
                 video_features, self._video_feature_names = \
                     self._video_feature_extractor.extract_video_features(
-                        clip.clip_path, ["lbps", "hogs", "colors"])
+                        clip.clip_path, **video_extractor_kw_args)
                 clip.video_features = video_features.tostring()
                 video_features_extracted.append(clip.clip_path)
                 print("Done")
@@ -183,7 +198,7 @@ class EnnIOCore:
                 print("Extracting audio features from file: {}".format(os.path.basename(audio.audio_path)))
                 audio_features, self._audio_feature_names = \
                     self._audio_feature_extractor.extract_audio_features(
-                        audio.audio_path, get_names=True)
+                        audio.audio_path, **audio_extractor_kw_args)
                 audio.audio_features = audio_features.tostring()
                 audio_features_extracted.append(audio.audio_path)
                 print("Done")
