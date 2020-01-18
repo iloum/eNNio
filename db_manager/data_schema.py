@@ -78,3 +78,16 @@ class Clip(Base):
     def get_row(self):
         return (self.clip_id, self.url, self.clip_title, self.clip_description, self.clip_path,
                 self.video_features, self.audio_from_clip)
+
+
+class Feature(Base):
+    __tablename__ = 'features'
+    features_type = sql.Column(sql.String, primary_key=True)
+    feature_names = sql.Column(sql.String)
+
+    def __init__(self, features_type, feature_names=""):
+        self.features_type = features_type
+        self.feature_names = feature_names
+
+    def get_row(self):
+        return self.features_type, self.feature_names

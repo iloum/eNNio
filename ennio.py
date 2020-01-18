@@ -2,6 +2,7 @@
 
 import sys
 import re
+from time import time
 from cmd import Cmd
 from ennio_core.ennio_core import EnnIOCore
 
@@ -30,20 +31,20 @@ class UserInterface(Cmd):
 
     do_EOF = do_exit
 
-    def do_construct_model(self, args):
-        """
-        Create and train a model
-        """
-        self.ennio_core.construct_model()
+    # def do_construct_model(self, args):
+    #     """
+    #     Create and train a model
+    #     """
+    #     self.ennio_core.construct_model()
 
-    def do_use_model(self, args):
-        """
-        Use an existing model to predict the score
-        Usage: use_model <filename>
-        """
-        if not args:
-            print("Video file name needed")
-        self.ennio_core.use_model(input_file=args)
+    # def do_use_model(self, args):
+    #     """
+    #     Use an existing model to predict the score
+    #     Usage: use_model <filename>
+    #     """
+    #     if not args:
+    #         print("Video file name needed")
+    #     self.ennio_core.use_model(input_file=args)
 
     def do_download_video_from_url(self, args):
         """
@@ -89,8 +90,9 @@ class UserInterface(Cmd):
         Extract audio and video features from downloaded file
         Usage: extract_features
         """
-
+        start_time = time()
         video_extracted, audio_extracted = self.ennio_core.extract_features()
+        print("Finished in {:.1f} secs".format(time()-start_time))
         print('Video features extracted from {} clips'.format(len(video_extracted)))
         print('Audio features extracted from {} clips'.format(len(audio_extracted)))
 
@@ -105,6 +107,13 @@ class UserInterface(Cmd):
 
         for option in args.split():
             self.ennio_core.drop(option)
+
+    def do_create_dataframes(self, args):
+        """
+        Save extracted features to pickled dataframes
+        """
+        self.ennio_core.create_dataframe_files()
+
 
 if __name__=='__main__':
     # try:

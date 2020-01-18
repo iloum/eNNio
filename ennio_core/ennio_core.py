@@ -2,13 +2,15 @@ import os
 import hashlib
 import csv
 import multiprocessing
+import pandas as pd
+import numpy as np
 from config_manager.config_manager import ConfigManager
 from data_aquisitor.data_aquisitor import DataAquisitor
 from ennio_exceptions import VideoAlreadyExist, EnnIOException
 from db_manager.db_manager import DbManager
 from feature_extractor.video_feature_exractor import VideoFeatureExtractor
 from feature_extractor.audio_feature_extractor import AudioFeatureExtractor
-from ml_core.ml_core import MLCore
+# from ml_core.ml_core import MLCore
 
 
 class EnnIOCore:
@@ -18,12 +20,14 @@ class EnnIOCore:
         self._db_manager = DbManager()
         self._video_feature_extractor = VideoFeatureExtractor()
         self._audio_feature_extractor = AudioFeatureExtractor()
-        self._ml_core = MLCore()
+        # self._ml_core = MLCore()
         self._video_download_dir = None
         self._data_dir = None
         self._url_list_file_location = None
         self._video_stream_dir = None
         self._audio_stream_dir = None
+        self._video_feature_names = None
+        self._audio_feature_names = None
 
     def setup(self):
         self._config_manager.read_config()
@@ -36,6 +40,8 @@ class EnnIOCore:
         self._create_directories()
         self._data_aquisitor.set_download_location(self._video_download_dir)
         self._db_manager.setup(os.path.join(self._data_dir, self._config_manager.get_field('db-file-name')))
+        self._video_feature_names = self._db_manager.get_video_feature_names()
+        self._audio_feature_names = self._db_manager.get_audio_feature_names()
 
     def _create_directories(self):
         for directory in [self._audio_stream_dir, self._video_download_dir,
@@ -45,29 +51,27 @@ class EnnIOCore:
     def on_exit(self):
         self._db_manager.cleanup()
 
-    def construct_model(self):
-        """
-        Method to create and train an ML model
-        :return:
-        """
-        self.download_video_from_url_file()
-        self.extract_features(os.listdir(self._video_download_dir))
-        #TODO: Call MLcore
-        where_models_will_be_saved = "IN THIS PATH"
-        self._ml_core.create_model("ANN", where_models_will_be_saved)
-        # ....
-        #TODO: To be corrected and changed or tell me what to do... :)
+    # def construct_model(self):
+    #     """
+    #     Method to create and train an ML model
+    #     :return:
+    #     """
+    #     self.download_video_from_url_file()
+    #     self.extract_features(os.listdir(self._video_download_dir))
+    #     #TODO: Call MLcore
+    #     where_models_will_be_saved = "IN THIS PATH"
+    #     self._ml_core.create_model("ANN", where_models_will_be_saved)
+    #     # ....
+    #     #TODO: To be corrected and changed or tell me what to do... :)
 
-
-
-    def use_model(self, input_file):
-        """
-        Method to use the existing model in order to predict a
-        suitable music score
-        :return:
-        """
-        self.extract_features(input_file)
-        # TODO: Call MLcore
+    # def use_model(self, input_file):
+    #     """
+    #     Method to use the existing model in order to predict a
+    #     suitable music score
+    #     :return:
+    #     """
+    #     self.extract_features(input_file)
+    #     # TODO: Call MLcore
 
     def download_video_from_url(self, url):
         """
@@ -168,7 +172,7 @@ class EnnIOCore:
 
             if not video_features_exist_in_db:
                 print("Extracting video features from file: {}".format(os.path.basename(clip.clip_path)))
-                video_features, _ = \
+                video_features, self._video_feature_names = \
                     self._video_feature_extractor.extract_video_features(
                         clip.clip_path, ["lbps", "hogs", "colors"])
                 clip.video_features = video_features.tostring()
@@ -177,14 +181,21 @@ class EnnIOCore:
 
             if not audio_feature_exist_in_db:
                 print("Extracting audio features from file: {}".format(os.path.basename(audio.audio_path)))
-                audio_features = \
+                audio_features, self._audio_feature_names = \
                     self._audio_feature_extractor.extract_audio_features(
-                        audio.audio_path)
+                        audio.audio_path, get_names=True)
                 audio.audio_features = audio_features.tostring()
                 audio_features_extracted.append(audio.audio_path)
                 print("Done")
 
-            self._db_manager.save_clip()
+            self._db_manager.save()
+
+        if video_features_extracted:
+            self._db_manager.update_video_feature_names(self._video_feature_names)
+        if audio_features_extracted:
+            self._db_manager.update_audio_feature_names(self._audio_feature_names)
+        self._db_manager.save()
+
         return video_features_extracted, audio_features_extracted
 
 
@@ -209,3 +220,25 @@ class EnnIOCore:
             self._db_manager.clear_audio_features()
         if option == "video_features":
             self._db_manager.clear_video_features()
+
+    def create_dataframe_files(self):
+        video_features = dict()
+        audio_features = dict()
+        for clip in self._db_manager.get_all_clips():
+            audio = self._db_manager.get_audio_by_id(clip.audio_from_clip)
+            video_features_exist_in_db = clip.video_features != ""
+            audio_feature_exist_in_db = audio.audio_features != ""
+
+            if video_features_exist_in_db and audio_feature_exist_in_db:
+                video_features[clip.clip_id] = np.frombuffer(clip.video_features)
+                audio_features[clip.clip_id] = np.frombuffer(audio.audio_features)
+
+        video_df = pd.DataFrame.from_dict(video_features, orient='index',
+                                          columns=self._video_feature_names)
+        audio_df = pd.DataFrame.from_dict(audio_features, orient='index',
+                                          columns=self._audio_feature_names)
+
+        print(video_df)
+        print(audio_df)
+        video_df.to_pickle(os.path.join(self._data_dir, "video_features.pkl"))
+        audio_df.to_pickle(os.path.join(self._data_dir, "audio_features.pkl"))

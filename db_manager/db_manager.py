@@ -4,7 +4,7 @@ from sqlalchemy.orm import create_session
 import numpy as np
 import os
 
-from db_manager.data_schema import Base, Clip, clip_header, Audio, audio_header
+from db_manager.data_schema import Base, Clip, clip_header, Audio, audio_header, Feature
 
 
 class DbManager(object):
@@ -23,6 +23,7 @@ class DbManager(object):
                                         .format(db_file=db_file))
         self.create_db()
         self.session = create_session(bind=self.engine)
+        self._auto_create_features()
 
     @property
     def db_name(self):
@@ -31,7 +32,7 @@ class DbManager(object):
     def create_db(self):
         Base.metadata.create_all(self.engine)
 
-    def save_clip(self):
+    def save(self):
         self.session.flush()
 
     def cleanup(self):
@@ -127,15 +128,6 @@ class DbManager(object):
         return self.session.query(exists().where(Audio.clip_id == audio_id))
 
     def get_audio_by_id(self, audio_id):
-        # q = self.session.query(Audio).filter(Audio.audio_id == audio_id)
-        # p = dict.fromkeys(audio_header(), 0)
-        # for col in clip_header():
-        #     if col == "audio_features":
-        #         p[col] = np.fromstring(q[col])
-        #     else:
-        #         p[col] = q[col]
-        # return p
-
         return self.session.query(Audio).filter(Audio.audio_id ==
                                                audio_id).first()
 
@@ -162,3 +154,30 @@ class DbManager(object):
         table.append(audio_header())
         table.extend([audio.get_row() for audio in audios])
         return tuple(table)
+
+    def _update_feature_names(self, feature_type, feature_names):
+        instance = self.session.query(Feature).filter(Feature.features_type == feature_type).first()
+        instance.feature_names = "|".join(feature_names)
+        self.session.flush()
+
+    def update_video_feature_names(self, feature_names):
+        self._update_feature_names("video", feature_names)
+
+    def update_audio_feature_names(self, feature_names):
+        self._update_feature_names("audio", feature_names)
+
+    def _get_feature_names(self, feature_type):
+        instance = self.session.query(Feature).filter(Feature.features_type == feature_type).first()
+        return instance.feature_names.split("|")
+
+    def get_video_feature_names(self):
+        return self._get_feature_names("video")
+
+    def get_audio_feature_names(self):
+        return self._get_feature_names("audio")
+
+    def _auto_create_features(self):
+        for features_type in ["video", "audio"]:
+            if not self.session.query(Feature).filter(Feature.features_type == features_type).first():
+                self.session.add(Feature(features_type=features_type))
+                self.session.flush()
