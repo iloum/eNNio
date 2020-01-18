@@ -2,6 +2,7 @@ import os
 import hashlib
 import csv
 import multiprocessing
+import time
 import pandas as pd
 import numpy as np
 from config_manager.config_manager import ConfigManager
@@ -10,6 +11,7 @@ from ennio_exceptions import VideoAlreadyExist, EnnIOException
 from db_manager.db_manager import DbManager
 from feature_extractor.video_feature_exractor import VideoFeatureExtractor
 from feature_extractor.audio_feature_extractor import AudioFeatureExtractor
+from functools import reduce
 # from ml_core.ml_core import MLCore
 
 
@@ -92,27 +94,37 @@ class EnnIOCore:
         downloaded_videos = list()
         failed_videos = list()
         for row in self._read_url_file():
+            title = row['Film']
             url = row['URL']
-            start_time = row['Start']
-            end_time = row['End']
-            if self._db_manager.url_exists(url):
-                continue
-            try:
-                file_path = self._download_video_from_entry(url, start_time, end_time)
-                downloaded_videos.append(file_path)
-            except EnnIOException:
-                failed_videos.append(row)
-                continue
+            start_time_str = row['Start']
+            end_time_str = row['End']
+            comment = row['Comment']
+            start_time = self._time_string_to_seconds(start_time_str)
+            end_time = self._time_string_to_seconds(end_time_str)
+
+            while start_time < end_time:
+                if not self._clip_exists(url, start_time, end_time):
+                    try:
+                        file_path = self._download_video_from_entry(url, start_time, start_time + 20, comment=comment)
+                        downloaded_videos.append(file_path)
+                    except EnnIOException:
+                        failed_videos.append("{title}, {url}, {start}, {end}, {comment}".format(title=title,
+                                                                                                url=url,
+                                                                                                start=start_time_str,
+                                                                                                end=end_time_str,
+                                                                                                comment=comment))
+                start_time += 20
 
         return downloaded_videos, failed_videos
 
-    def _download_video_from_entry(self, url, start_time, end_time):
+    def _download_video_from_entry(self, url, start_time, end_time, comment=""):
         available_cpus = multiprocessing.cpu_count()
         if available_cpus > 1:
             available_cpus -= 1
+
         temp = self._data_aquisitor.download_from_url(url,
-                                                      start_time=start_time,
-                                                      end_time=end_time,
+                                                      start_time=time.strftime("%M:%S", time.gmtime(start_time)),
+                                                      end_time=time.strftime("%M:%S", time.gmtime(end_time)),
                                                       threads=available_cpus)
         if not temp:
             raise EnnIOException
@@ -127,17 +139,18 @@ class EnnIOCore:
                                        audio_stream_name)
         video_stream_id = self._get_id(video_file_path)
         audio_stream_id = self._get_id(audio_file_path)
-        start_time = metadata['timestamps'][-1][-1][0]
-        end_time = metadata['timestamps'][-1][-1][1]
-        self._db_manager.add_audio(audio_id=audio_stream_id,
-                                   audio_path=audio_file_path)
-        self._db_manager.add_clip(clip_id=video_stream_id,
-                                  url=url,
-                                  start_time=start_time,
-                                  end_time=end_time,
-                                  clip_path=video_file_path,
-                                  clip_title=video_stream_name,
-                                  audio_from_clip=audio_stream_id)
+        if not self._db_manager.audio_exists(audio_stream_id):
+            self._db_manager.add_audio(audio_id=audio_stream_id,
+                                       audio_path=audio_file_path)
+        if not self._db_manager.video_exists(video_stream_id):
+            self._db_manager.add_clip(clip_id=video_stream_id,
+                                      url=url,
+                                      start_time=start_time,
+                                      end_time=end_time,
+                                      clip_path=video_file_path,
+                                      clip_title=video_stream_name,
+                                      clip_description=comment,
+                                      audio_from_clip=audio_stream_id)
         return video_file_path
 
     def get_status(self):
@@ -146,12 +159,11 @@ class EnnIOCore:
         :return:
         """
         print("CLIPS TABLE")
-        for entry in self._db_manager.dump_clips():
-            print(entry)
+        print("Number of video clips in the db: {}".format(len(self._db_manager.dump_clips())))
+        print()
 
         print("AUDIO TABLE")
-        for entry in self._db_manager.dump_audio_table():
-            print(entry)
+        print("Number of audio clips in the db: {}".format(len(self._db_manager.dump_audio_table())))
 
     def _get_video_extractor_config(self):
         config = self._config_manager.get_all_fields(label='VIDEO')
@@ -260,3 +272,14 @@ class EnnIOCore:
         print(audio_df)
         video_df.to_pickle(os.path.join(self._data_dir, "video_features.pkl"))
         audio_df.to_pickle(os.path.join(self._data_dir, "audio_features.pkl"))
+
+    @staticmethod
+    def _time_string_to_seconds(time_string):
+        return reduce(lambda x, y: x + y, [int(x) * (60 ** i) for i, x in enumerate(time_string.split(":")[::-1])])
+
+    def _clip_exists(self, url, start_time, end_time):
+        clips = self._db_manager.get_clips_by_url(url)
+        for clip in clips:
+            if clip.start_time == start_time and clip.end_time == end_time:
+                return True
+        return False
