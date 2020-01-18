@@ -235,6 +235,9 @@ class EnnIOCore:
             self._db_manager.clear_audio_features()
         if option == "video_features":
             self._db_manager.clear_video_features()
+        if option == "tables":
+            self._db_manager.clear_audio_table()
+            self._db_manager.clear_clips_table()
 
     def create_dataframe_files(self):
         video_features = dict()

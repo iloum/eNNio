@@ -99,7 +99,7 @@ class UserInterface(Cmd):
     def do_drop(self, args):
         """
         Drop information from db
-        Usage: drop [audio_features] [video_features]
+        Usage: drop [audio_features] [video_features] [tables]
         """
         if not args:
             print("Please give one or more options")
