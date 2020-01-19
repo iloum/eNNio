@@ -292,6 +292,5 @@ class EnnIOCore:
         clips = self._db_manager.get_clips_by_url(url)
         for clip in clips:
             if clip.start_time == start_time and clip.end_time == end_time:
-                print(clip)
                 return True
         return False
