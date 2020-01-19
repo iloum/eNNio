@@ -15,8 +15,13 @@ class VideoFeatureExtractor(FeatureExtractor):
         """
         v = vf.VideoFeatureExtractor(ftlist, resize_width=width, step=step)
         features, time, featureNames = v.extract_features(filename)
-        featuresAvg = np.average(features, axis=0)
-        return featuresAvg, featureNames
+        features_avg = np.average(np.array(features, dtype=np.float64), axis=0)
+        features_std = np.std(np.array(features, dtype=np.float64), axis=0)
+        all_features = np.concatenate((features_avg, features_std), axis=None)
+        features_stdNames = [x + "_std" for x in featureNames]
+        all_featuresNames = featureNames + features_stdNames
+
+        return all_features, all_featuresNames
 
 
 
