@@ -92,7 +92,7 @@ class EnnIOCore:
         :return: List of downloaded file names
         """
         downloaded_videos = list()
-        failed_videos = list()
+        failed_videos = set()
         for row in self._read_url_file():
             title = row['Film']
             url = row['URL']
@@ -103,16 +103,16 @@ class EnnIOCore:
             end_time = self._time_string_to_seconds(end_time_str)
 
             while start_time < end_time:
-                if not self._clip_exists(url, start_time, end_time):
+                if not self._clip_exists(url, start_time, start_time + 20):
                     try:
                         file_path = self._download_video_from_entry(url, start_time, start_time + 20, comment=comment)
                         downloaded_videos.append(file_path)
                     except EnnIOException:
-                        failed_videos.append("{title}, {url}, {start}, {end}, {comment}".format(title=title,
-                                                                                                url=url,
-                                                                                                start=start_time_str,
-                                                                                                end=end_time_str,
-                                                                                                comment=comment))
+                        failed_videos.add("{title}, {url}, {start}, {end}, {comment}".format(title=title,
+                                                                                             url=url,
+                                                                                             start=start_time_str,
+                                                                                             end=end_time_str,
+                                                                                             comment=comment))
                 start_time += 20
 
         return downloaded_videos, failed_videos
@@ -243,6 +243,10 @@ class EnnIOCore:
         return hasher.hexdigest()
 
     def drop(self, option):
+        """
+        Method to clear DB tables or attributes
+        :param option: String
+        """
         if option == "audio_features":
             self._db_manager.clear_audio_features()
         if option == "video_features":
@@ -268,10 +272,17 @@ class EnnIOCore:
         audio_df = pd.DataFrame.from_dict(audio_features, orient='index',
                                           columns=self._audio_feature_names)
 
-        print(video_df)
-        print(audio_df)
-        video_df.to_pickle(os.path.join(self._data_dir, "video_features.pkl"))
-        audio_df.to_pickle(os.path.join(self._data_dir, "audio_features.pkl"))
+        options_str = str(self._get_video_extractor_config()).replace(" ", "").replace("'", "").replace(":", "_")
+        video_features_file = "video_features_{options}.pkl".format(options=options_str)
+        video_df.to_pickle(os.path.join(self._data_dir,
+                                        video_features_file))
+        print("Saved to {file_name}".format(file_name=video_features_file))
+
+        options_str = str(self._get_audio_extractor_config()).replace(" ", "").replace("'", "").replace(":", "_")
+        audio_features_file = "audio_features_{options}.pkl".format(options=options_str)
+        audio_df.to_pickle(os.path.join(self._data_dir,
+                                        audio_features_file))
+        print("Saved to {file_name}".format(file_name=audio_features_file))
 
     @staticmethod
     def _time_string_to_seconds(time_string):
@@ -281,5 +292,6 @@ class EnnIOCore:
         clips = self._db_manager.get_clips_by_url(url)
         for clip in clips:
             if clip.start_time == start_time and clip.end_time == end_time:
+                print(clip)
                 return True
         return False

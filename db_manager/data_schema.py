@@ -24,7 +24,7 @@ class Audio(Base):
         self.audio_path = audio_path
 
     def __repr__(self):
-        return "{audio_id}, {audio_features},  {path}".format(
+        return "{audio_id}, {audio_features}, {path}".format(
             path=self.audio_path,
             audio_features=self.audio_features,
             audio_id=self.audio_id)
@@ -67,13 +67,16 @@ class Clip(Base):
         self.audio_from_clip = audio_from_clip
 
     def __repr__(self):
-        return "{id}, {url}, {title}, {descr}, {path}, {feat}, {audio}".format(id=self.clip_id,
-                                                                               title=self.clip_title,
-                                                                               descr=self.clip_description,
-                                                                               url=self.url,
-                                                                               path=self.clip_path,
-                                                                               feat=self.video_features,
-                                                                               audio=self.audio_from_clip)
+        return "{id}, {url}, {start_time}, {end_time}," \
+               "{title}, {descr}, {path}, {feat}, {audio}".format(id=self.clip_id,
+                                                                  title=self.clip_title,
+                                                                  start_time=self.start_time,
+                                                                  end_time=self.end_time,
+                                                                  descr=self.clip_description,
+                                                                  url=self.url,
+                                                                  path=self.clip_path,
+                                                                  feat=self.video_features,
+                                                                  audio=self.audio_from_clip)
 
     def get_row(self):
         return (self.clip_id, self.url, self.clip_title, self.clip_description, self.clip_path,
