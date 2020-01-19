@@ -14,7 +14,7 @@ class AudioFeatureExtractor:
                                mid_step=0.5,
                                short_window=1,
                                short_step=0.5,
-                               get_names=False):
+                               get_names=True):
         """
         Method to extract audio features from an audio file
         :param file_path: Name of the audio file

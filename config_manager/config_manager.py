@@ -61,13 +61,34 @@ class ConfigManager:
         Currently sets the language to English
         """
         self._config['GLOBAL'] = {}
+        self.set_field(field_name="data-folder",
+                       value="data")
         self.set_field(field_name="urls-list-file",
                        value="url_list.csv")
-        self.set_field(field_name="ml-model-file",
-                       value="data/model.sav")
-        self.set_field(field_name="db-file",
-                       value="data/ennIO.db")
-        self.set_field(field_name="video-download-dir",
-                       value="data/downloads/")
-        self.set_field(field_name="output-dir",
-                       value="data/output/")
+        self.set_field(field_name="db-file-name",
+                       value="ennIO.db")
+
+        self._config['VIDEO'] = {}
+        self.set_field(field_name="feature-types",
+                       value='["lbps", "hogs", "colors"]',
+                       label='VIDEO')
+        self.set_field(field_name="resize-width",
+                       value="300",
+                       label='VIDEO')
+        self.set_field(field_name="step",
+                       value="3",
+                       label='VIDEO')
+
+        self._config['AUDIO'] = {}
+        self.set_field(field_name="mid-term-window",
+                       value='5',
+                       label='AUDIO')
+        self.set_field(field_name="mid-term-step",
+                       value='0.5',
+                       label='AUDIO')
+        self.set_field(field_name="short-term-window",
+                       value='1',
+                       label='AUDIO')
+        self.set_field(field_name="short-term-step",
+                       value='0.5',
+                       label='AUDIO')

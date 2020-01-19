@@ -134,7 +134,7 @@ class VideoFeatureExtractor():
                     frame2 = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
                     frame3 = self.resize_image(frame2, self.resize_width)
                     features, feature_names = [], []
-                    cv2.imshow('Color', cv2.cvtColor(frame3, cv2.COLOR_RGB2BGR))
+                    # cv2.imshow('Color', cv2.cvtColor(frame3, cv2.COLOR_RGB2BGR))
                     cv2.waitKey(5) & 0xFF
                     if "colors" in self.list_of_features:
                         f, fn = vs.getRGBS(frame3)

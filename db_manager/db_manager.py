@@ -2,8 +2,9 @@ import sqlalchemy as sql
 from sqlalchemy import exc, exists
 from sqlalchemy.orm import create_session
 import numpy as np
+import os
 
-from db_manager.data_schema import Base, Clip, clip_header, Audio, audio_header
+from db_manager.data_schema import Base, Clip, clip_header, Audio, audio_header, Feature
 
 
 class DbManager(object):
@@ -11,11 +12,18 @@ class DbManager(object):
     CLass that manages all DB operations
     """
 
-    def __init__(self, path="", db_name="eNNio_DB"):
-        self._db_name = db_name
-        self.engine = sql.create_engine('sqlite:///{path}{db_name}.db'
-                                        .format(path=path, db_name=self.db_name))
+    def __init__(self):
+        self._db_name = None
+        self.engine = None
+        self.session = None
+
+    def setup(self, db_file):
+        self._db_name = os.path.basename(db_file)
+        self.engine = sql.create_engine('sqlite:///{db_file}'
+                                        .format(db_file=db_file))
+        self.create_db()
         self.session = create_session(bind=self.engine)
+        self._auto_create_features()
 
     @property
     def db_name(self):
@@ -24,27 +32,36 @@ class DbManager(object):
     def create_db(self):
         Base.metadata.create_all(self.engine)
 
-    def save_clip(self):
+    def save(self):
         self.session.flush()
 
     def cleanup(self):
         self.session.close()
 
     #CLIPS
-    def add_clip(self, clip_id="", url="",
-                 clip_title="", clip_description="", clip_path="", video_features=np.zeros(354), audio_from_clip=""):
-        new_clip = Clip(clip_id=clip_id, url=url, clip_title=clip_title,
+    def add_clip(self, clip_id="", url="", start_time=0, end_time=0,
+                 clip_title="", clip_description="", clip_path="",
+                 video_features=None, audio_from_clip=""):
+        new_clip = Clip(clip_id=clip_id, url=url,
+                        start_time=start_time, end_time=end_time,
+                        clip_title=clip_title,
                         clip_description=clip_description,
-                        clip_path=clip_path, video_features=video_features.tostring(),
+                        clip_path=clip_path,
+                        video_features=video_features.tostring() if
+                        video_features else "",
                         audio_from_clip=audio_from_clip)
         self.session.add(new_clip)
         self.session.flush()
 
     def url_exists(self, url):
-        return self.session.query(exists().where(Clip.url == url))
+        clips = self.session.query(Clip).filter_by(url=url).all()
+        return True if clips else False
+
+    def get_clips_by_url(self, url):
+        return self.session.query(Clip).filter_by(url=url).all()
 
     def video_exists(self, video_id):
-        return self.session.query(exists().where(Clip.clip_id == video_id))
+        return self.session.query(exists().where(Clip.clip_id == video_id)).all()
 
     def get_clip_by_id(self, clip_id=""):
         q = self.session.query(Clip).filter(Clip.clip_id == clip_id).all()
@@ -60,6 +77,11 @@ class DbManager(object):
     def clear_clips_table(self):
         for row in self.get_all_clips():
             self.session.delete(row)
+        self.session.flush()
+
+    def clear_video_features(self):
+        for row in self.get_all_clips():
+            row.video_features = ""
         self.session.flush()
 
     def get_all_clips(self):
@@ -97,28 +119,29 @@ class DbManager(object):
         return clip_args
 
     #AUDIO
-
-    def add_audio(self, audio_id="", audio_features=np.zeros(66), audio_path=""):
-        new_audio = Audio(audio_id=audio_id, audio_features=audio_features.tostring(), audio_path=audio_path)
+    def add_audio(self, audio_id="", audio_features=None, audio_path=""):
+        new_audio = Audio(audio_id=audio_id,
+                          audio_features=audio_features.tostring() if
+                          audio_features else "",
+                          audio_path=audio_path)
         self.session.add(new_audio)
         self.session.flush()
 
     def audio_exists(self, audio_id):
-        return self.session.query(exists().where(Audio.clip_id == audio_id))
+        return self.session.query(exists().where(Audio.audio_id == audio_id)).all()
 
     def get_audio_by_id(self, audio_id):
-        q = self.session.query(Audio).filter(Audio.audio_id == audio_id)
-        p = dict.fromkeys(audio_header(), 0)
-        for col in clip_header():
-            if col == "audio_features":
-                p[col] = np.fromstring(q[col])
-            else:
-                p[col] = q[col]
-        return p
+        return self.session.query(Audio).filter(Audio.audio_id ==
+                                               audio_id).first()
 
     def clear_audio_table(self):
         for row in self.get_all_audio():
             self.session.delete(row)
+        self.session.flush()
+
+    def clear_audio_features(self):
+        for row in self.get_all_audio():
+            row.audio_features = ""
         self.session.flush()
 
     def get_all_audio(self):
@@ -134,3 +157,30 @@ class DbManager(object):
         table.append(audio_header())
         table.extend([audio.get_row() for audio in audios])
         return tuple(table)
+
+    def _update_feature_names(self, feature_type, feature_names):
+        instance = self.session.query(Feature).filter(Feature.features_type == feature_type).first()
+        instance.feature_names = "|".join(feature_names)
+        self.session.flush()
+
+    def update_video_feature_names(self, feature_names):
+        self._update_feature_names("video", feature_names)
+
+    def update_audio_feature_names(self, feature_names):
+        self._update_feature_names("audio", feature_names)
+
+    def _get_feature_names(self, feature_type):
+        instance = self.session.query(Feature).filter(Feature.features_type == feature_type).first()
+        return instance.feature_names.split("|")
+
+    def get_video_feature_names(self):
+        return self._get_feature_names("video")
+
+    def get_audio_feature_names(self):
+        return self._get_feature_names("audio")
+
+    def _auto_create_features(self):
+        for features_type in ["video", "audio"]:
+            if not self.session.query(Feature).filter(Feature.features_type == features_type).first():
+                self.session.add(Feature(features_type=features_type))
+                self.session.flush()

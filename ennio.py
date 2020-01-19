@@ -2,6 +2,7 @@
 
 import sys
 import re
+from time import time
 from cmd import Cmd
 from ennio_core.ennio_core import EnnIOCore
 
@@ -30,20 +31,20 @@ class UserInterface(Cmd):
 
     do_EOF = do_exit
 
-    def do_construct_model(self, args):
-        """
-        Create and train a model
-        """
-        self.ennio_core.construct_model()
+    # def do_construct_model(self, args):
+    #     """
+    #     Create and train a model
+    #     """
+    #     self.ennio_core.construct_model()
 
-    def do_use_model(self, args):
-        """
-        Use an existing model to predict the score
-        Usage: use_model <filename>
-        """
-        if not args:
-            print("Video file name needed")
-        self.ennio_core.use_model(input_file=args)
+    # def do_use_model(self, args):
+    #     """
+    #     Use an existing model to predict the score
+    #     Usage: use_model <filename>
+    #     """
+    #     if not args:
+    #         print("Video file name needed")
+    #     self.ennio_core.use_model(input_file=args)
 
     def do_download_video_from_url(self, args):
         """
@@ -56,13 +57,27 @@ class UserInterface(Cmd):
         if not re.match(VALID_URL, args):
             print("Not valid url")
             return
-        self.ennio_core.download_video_from_url(url=args)
+        file_path = self.ennio_core.download_video_from_url(url=args)
+        if file_path:
+            print('Downloaded files')
+            print(file_path)
+        else:
+            print('Failed to download')
+            print(args)
 
     def do_download_video_from_url_file(self, args):
         """
         Download Youtube video from url CSV
         """
-        self.ennio_core.download_video_from_url_file()
+        downloaded, failed = self.ennio_core.download_video_from_url_file()
+        print('Downloaded files')
+        for f in downloaded:
+            print(f)
+        print()
+        print('Failed to download')
+        for f in failed:
+            print(f)
+        print()
 
     def do_show_status(self, args):
         """
@@ -73,11 +88,31 @@ class UserInterface(Cmd):
     def do_extract_features(self, args):
         """
         Extract audio and video features from downloaded file
-        Usage: extract_features <filename> <filename> ...
+        Usage: extract_features
+        """
+        start_time = time()
+        video_extracted, audio_extracted = self.ennio_core.extract_features()
+        print("Finished in {:.1f} secs".format(time()-start_time))
+        print('Video features extracted from {} clips'.format(len(video_extracted)))
+        print('Audio features extracted from {} clips'.format(len(audio_extracted)))
+
+    def do_drop(self, args):
+        """
+        Drop information from db
+        Usage: drop [audio_features] [video_features] [tables]
         """
         if not args:
-            print("Video file names needed for feature extraction")
-        self.ennio_core.extract_features(filenames=args.split())
+            print("Please give one or more options")
+            return
+
+        for option in args.split():
+            self.ennio_core.drop(option)
+
+    def do_create_dataframes(self, args):
+        """
+        Save extracted features to pickled dataframes
+        """
+        self.ennio_core.create_dataframe_files()
 
 
 if __name__=='__main__':

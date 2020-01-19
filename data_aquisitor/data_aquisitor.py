@@ -1,6 +1,7 @@
-from Bifrost import get_videos
+from data_aquisitor.Bifrost import get_videos
 import time
 import tempfile
+import os
 from collections import namedtuple
 
 
@@ -33,8 +34,8 @@ class DataAquisitor:
 
         args=namedtuple("args","filename outputfolder threads")
 
-        temp_filename="url_temp_"+str(round(time.time()))+".csv"
-        with tempfile.NamedTemporaryFile(mode="wt") as f:
+        temp_filename=os.path.join(self._download_location, "url_temp.csv")
+        with open(temp_filename, 'w') as f:
             f.write(dummy_csv_headers+"\n")
             f.write(dummy_csv_body)
             f.seek(0)
@@ -42,6 +43,7 @@ class DataAquisitor:
             persisted_metadata,onego_metadata=get_videos.main(videoargs)
 
         self.set_metadata(persisted_metadata)
+        os.remove(temp_filename)
         return onego_metadata
 
 
