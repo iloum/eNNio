@@ -159,11 +159,11 @@ class EnnIOCore:
         :return:
         """
         print("CLIPS TABLE")
-        print("Number of video clips in the db: {}".format(len(self._db_manager.dump_clips())))
+        print("Number of video clips in the db: {}".format(len(self._db_manager.dump_clips()) - 1))
         print()
 
         print("AUDIO TABLE")
-        print("Number of audio clips in the db: {}".format(len(self._db_manager.dump_audio_table())))
+        print("Number of audio clips in the db: {}".format(len(self._db_manager.dump_audio_table()) - 1))
 
     def _get_video_extractor_config(self):
         config = self._config_manager.get_all_fields(label='VIDEO')

@@ -61,7 +61,7 @@ class DbManager(object):
         return self.session.query(Clip).filter_by(url=url).all()
 
     def video_exists(self, video_id):
-        return self.session.query(exists().where(Clip.clip_id == video_id)).all()
+        return self.session.query(Clip).filter_by(clip_id=video_id).all()
 
     def get_clip_by_id(self, clip_id=""):
         q = self.session.query(Clip).filter(Clip.clip_id == clip_id).all()
@@ -128,7 +128,8 @@ class DbManager(object):
         self.session.flush()
 
     def audio_exists(self, audio_id):
-        return self.session.query(exists().where(Audio.audio_id == audio_id)).all()
+        return self.session.query(Audio).filter(Audio.audio_id ==
+                                               audio_id).all()
 
     def get_audio_by_id(self, audio_id):
         return self.session.query(Audio).filter(Audio.audio_id ==
