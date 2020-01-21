@@ -258,6 +258,8 @@ class EnnIOCore:
     def create_dataframe_files(self):
         video_features = dict()
         audio_features = dict()
+        metadata = dict()
+        metadata_columns = ['Title', 'Url', 'Video file path', 'Audio file path']
         for clip in self._db_manager.get_all_clips():
             audio = self._db_manager.get_audio_by_id(clip.audio_from_clip)
             video_features_exist_in_db = clip.video_features != ""
@@ -266,23 +268,32 @@ class EnnIOCore:
             if video_features_exist_in_db and audio_feature_exist_in_db:
                 video_features[clip.clip_id] = np.frombuffer(clip.video_features)
                 audio_features[clip.clip_id] = np.frombuffer(audio.audio_features)
+                metadata[clip.clip_id] = [clip.clip_title, clip.url, clip.clip_path, audio.audio_path]
 
         video_df = pd.DataFrame.from_dict(video_features, orient='index',
                                           columns=self._video_feature_names)
         audio_df = pd.DataFrame.from_dict(audio_features, orient='index',
                                           columns=self._audio_feature_names)
+        metadata_df = pd.DataFrame.from_dict(metadata, orient='index',
+                                             columns=metadata_columns)
 
         options_str = str(self._get_video_extractor_config()).replace(" ", "").replace("'", "").replace(":", "_")
-        video_features_file = "video_features_{options}.pkl".format(options=options_str)
+        video_features_file = "video_features_df_{options}.pkl".format(options=options_str)
         video_df.to_pickle(os.path.join(self._data_dir,
                                         video_features_file))
         print("Saved to {file_name}".format(file_name=video_features_file))
 
         options_str = str(self._get_audio_extractor_config()).replace(" ", "").replace("'", "").replace(":", "_")
-        audio_features_file = "audio_features_{options}.pkl".format(options=options_str)
+        audio_features_file = "audio_features_df_{options}.pkl".format(options=options_str)
         audio_df.to_pickle(os.path.join(self._data_dir,
                                         audio_features_file))
         print("Saved to {file_name}".format(file_name=audio_features_file))
+
+        metadata_file = "metadata_df.pkl"
+        metadata_df.to_pickle(os.path.join(self._data_dir,metadata_file))
+        print("Saved to {file_name}".format(file_name=metadata_file))
+
+
 
     @staticmethod
     def _time_string_to_seconds(time_string):
