@@ -165,14 +165,21 @@ class VideoFeatureExtractor():
                             frame3_g_prev = frame3_g
                         p0 = cv2.goodFeaturesToTrack(frame3_g, mask=None,
                                                      **feature_params)
-                        angles, mags, MEANANGLE, STD, good_new, good_old, dxS, dyS, TitlPanConfidence = \
-                            self.computeFlowFeatures(frame3_g, frame3_g_prev, p0, lk_params)
+                        if p0 is None:
+                            MEANANGLE = 0.0
+                            STD = np.array([0.0])
+                        else:
+                            angles, mags, MEANANGLE, STD, good_new, good_old, dxS, dyS, TitlPanConfidence = \
+                                self.computeFlowFeatures(frame3_g, frame3_g_prev, p0, lk_params)
+
                         f = [MEANANGLE, STD]
                         fn = ["m", "s"]
                         features.append(f)
                         feature_names += fn
                         frame3_g_prev = frame3_g
+                        #print(features)
                     features = np.concatenate(features)
+                    #print(features)
                     features_all.append(features)
                     PROCESS_NOW = False
             else:
