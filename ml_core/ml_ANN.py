@@ -11,25 +11,13 @@ import pickle
 import os
 
 class ANN(MLModel):
-    def __init__(self, name, batch_size, epochs, v_df, a_df, m_df):
-        self._data_dir = self._config_manager.get_field('data-folder')
-        self.video_df = v_df
-        self.audio_df = a_df
-        self.metadata_df = m_df
-        self.x_data_scl, self.y_data_scl, \
-        self.x_scaler, self.y_scaler = dp.apply_minmax_scaler(self.video_df, self.audio_df)
-
-        self.x_train, self.x_test, \
-        self.y_train, self.y_test = mu.custom_train_test_split(self.video_df, self.audio_df,
-                                                               self.metadata_df, 0.10,
-                                                               self.x_scaler, self.y_scaler,
-                                                               random_state=42)
+    def __init__(self, name, batch_size, epochs, input_size, output_size):
 
         self.batch_size = batch_size
         self.epochs = epochs
         self.model = Sequential()
-        self.input_size, _ = self.x_data_scl.shape
-        self.output_size, _ = self.y_data_scl.shape
+        self.input_size = input_size
+        self.output_size = output_size
 
         self.model = Sequential()
         self.model.add(Dense(200, activation='tanh', input_shape=(self.input_size,)))
@@ -53,58 +41,72 @@ class ANN(MLModel):
         '''
         return self.name
 
-    def train_ml_model(self):
+    def train_ml_model(self, video_df, audio_df, m_df):
         '''
         method to train the model
         :param train_data: the data for training
         :return: the trained model
         '''
-        self.model.fit(self.x_data_scl, self.y_data_scl,
+
+        video_data_scl, audio_data_scl, _, _ = dp.apply_minmax_scaler(video_df, audio_df)
+
+        self.model.fit(video_data_scl, audio_data_scl,
                        batch_size=self.batch_size,
                        epochs=self.epochs,
                        verbose=1)
 
-        pickle.dump(self.model, open(os.path.join(self._data_dir, self.name+".pkl"), "wb"))
-        return True
+        #pickle.dump(self.model, open(os.path.join(self._data_dir, self.name+".pkl"), "wb"))
 
-    def evaluate_ml_model(self):
+
+        return self.model
+
+    def evaluate_ml_model(self, video_df, audio_df, metadata_df):
         '''
         Method to evaluate the model based on test data
         :param test_data: data used for testing and evaluation
         :return: loss anc accuracy metrics
         '''
 
-        self.model.fit(self.x_train, self.y_train,
+        _, _, video_scaler, audio_scaler = dp.apply_minmax_scaler(video_df, audio_df)
+
+        video_train, video_test, audio_train, audio_test = mu.custom_train_test_split(video_df, audio_df,
+                                                               metadata_df, 0.10,
+                                                               video_scaler, audio_scaler,
+                                                               random_state=42)
+
+        self.model.fit(video_train, audio_train,
                        batch_size=self.batch_size,
                        epochs=self.epochs,
-                       verbose=1, validation_data=(self.x_test, self.y_test))
+                       verbose=1, validation_data=(video_test, audio_test))
 
-        score = self.model.evaluate(self.x_test, self.y_test, verbose=0)
+        score = self.model.evaluate(video_test, audio_test, verbose=0)
 
         loss = score
         return loss
 
-    def predict_ml_model(self, x_new):
+    def predict_ml_model(self, video_df, audio_df, metadata_df, video_new):
         '''
         Method to predict based on input
         :param x_new: new unseen data
         :return: the predited value
         '''
-        ann_mdl = pickle.load(open(os.path.join(self._data_dir, self.name+".pkl"), "rb"))
+        #ann_mdl = pickle.load(open(os.path.join(self._data_dir, self.name+".pkl"), "rb"))
 
-        x_knn = self.y_data_scl
-        y_knn = list(self.audio_df.index.values)
+        _, audio_data_scl, video_scaler, audio_scaler = dp.apply_minmax_scaler(video_df, audio_df)
+
+        x_knn = audio_data_scl
+        y_knn = list(audio_df.index.values)
         neigh = KNeighborsClassifier(n_neighbors=1, algorithm="brute", p=2)
         neigh.fit(x_knn, y_knn)
 
-        x_new_reshaped = x_new.reshape((1, self.input_size))
-        x_new_scaled = self.x_scaler.transform(x_new_reshaped)
-        y_pr = ann_mdl.predict(x_new_scaled)
+        video_new_new_reshaped = video_new.reshape((1, self.input_size))
+        video_new_scaled = video_scaler.transform(video_new_new_reshaped)
+        ann_prediction = self.model.predict(video_new_scaled)
 
-        knn_predict = neigh.predict(y_pr)
-        predicted_audio = self.metada_ftrs.loc[knn_predict, "Audio file path"].values
+        knn_predict = neigh.predict(ann_prediction)
+        predicted_audio = metadata_df.loc[knn_predict, "Audio file path"].values
 
-        print("predict:", self.metada_ftrs.loc[knn_predict, "Url"].values)
+        print("predict:", metadata_df.loc[knn_predict, "Url"].values)
 
         return predicted_audio[0]
 

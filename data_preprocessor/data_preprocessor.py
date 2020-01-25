@@ -25,15 +25,15 @@ def read_data_from_pkl(video_path, audio_path, medatada_path):
     return video_ftrs, audio_ftrs_proc, metada_ftrs
 
 def apply_minmax_scaler(v_ftrs, a_ftrs):
-    x_data = v_ftrs.values
-    y_data = a_ftrs.values
-    x_scaler = MinMaxScaler(feature_range=(-1, 1))
-    y_scaler = MinMaxScaler(feature_range=(-1, 1))
-    x_scaler.fit(x_data)
-    y_scaler.fit(y_data)
-    x_data_scld = x_scaler.transform(x_data)
-    y_data_scld = y_scaler.transform(y_data)
-    return x_data_scld, y_data_scld, x_scaler, y_scaler
+    video_data = v_ftrs.values
+    audio_data = a_ftrs.values
+    video_scaler = MinMaxScaler(feature_range=(-1, 1))
+    audio_scaler = MinMaxScaler(feature_range=(-1, 1))
+    video_scaler.fit(video_data)
+    audio_scaler.fit(audio_data)
+    video_data_scld = video_scaler.transform(video_data)
+    audio_data_scld = audio_scaler.transform(audio_data)
+    return video_data_scld, audio_data_scld, video_scaler, audio_scaler
 
 def reduce_dimensions(data, newdimension):
     """

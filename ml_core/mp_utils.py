@@ -26,20 +26,20 @@ def my_train_test_split(percentage, df):
 def custom_train_test_split(v_ftrs, a_ftrs, m_ftrs, test_size, x_scl, y_scl, random_state):
     random.seed(random_state)
     train_list, test_list = my_train_test_split(test_size, m_ftrs)
-    x_train_df = v_ftrs.loc[train_list]
-    y_train_df = a_ftrs.loc[train_list]
-    x_test_df = v_ftrs.loc[test_list]
-    y_test_df = a_ftrs.loc[test_list]
+    video_train_df = v_ftrs.loc[train_list]
+    audio_train_df = a_ftrs.loc[train_list]
+    video_test_df = v_ftrs.loc[test_list]
+    audio_test_df = a_ftrs.loc[test_list]
 
-    x_train_df.head()
+    video_train_df.head()
 
-    x_train_vls = x_train_df.values
-    y_train_vls = y_train_df.values
-    x_test_vls = x_test_df.values
-    y_test_vls = y_test_df.values
+    video_train_vls = video_train_df.values
+    audio_train_vls = audio_train_df.values
+    video_test_vls = video_test_df.values
+    audio_test_vls = audio_test_df.values
 
-    x_train = x_scl.transform(x_train_vls)
-    y_train = y_scl.transform(y_train_vls)
-    x_test = x_scl.transform(x_test_vls)
-    y_test = y_scl.transform(y_test_vls)
-    return x_train, x_test, y_train, y_test
+    video_train = x_scl.transform(video_train_vls)
+    audio_train = y_scl.transform(audio_train_vls)
+    video_test = x_scl.transform(video_test_vls)
+    audio_test = y_scl.transform(audio_test_vls)
+    return video_train, video_test, audio_train, audio_test
