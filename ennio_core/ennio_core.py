@@ -44,11 +44,44 @@ class EnnIOCore:
         self._db_manager.setup(os.path.join(self._data_dir, self._config_manager.get_field('db-file-name')))
         self._video_feature_names = self._db_manager.get_video_feature_names()
         self._audio_feature_names = self._db_manager.get_audio_feature_names()
+        self._check_db_consistency()
 
     def _create_directories(self):
         for directory in [self._audio_stream_dir, self._video_download_dir,
                           self._video_stream_dir]:
             os.makedirs(directory, exist_ok=True)
+
+    def _check_db_consistency(self):
+        print("Checking DB consistency")
+        removed_clips = []
+        for clip in self._db_manager.get_all_clips():
+            if not os.path.exists(clip.clip_path):
+                audio = self._db_manager.get_audio_by_id(clip.audio_from_clip)
+                if audio:
+                    self._db_manager.remove_audio(audio)
+                self._db_manager.remove_clip(clip)
+                removed_clips.append(clip)
+
+        for audio in self._db_manager.get_all_audio():
+            if not os.path.exists(audio.audio_path):
+                clip = self._db_manager.get_clip_by_audio_id(audio.audio_id)
+                self._db_manager.remove_audio(audio)
+                if clip:
+                    self._db_manager.remove_clip(clip)
+                    removed_clips.append(clip)
+
+        if removed_clips:
+            print("Following clip files are missing:")
+            for index, clip in enumerate(removed_clips, start=1):
+                print("\t{index}. {url} {path}".format(index=index,
+                                                       url=clip.url,
+                                                       path=clip.clip_path))
+
+            print("Please download them again if needed")
+        print("Done")
+
+
+
 
     def on_exit(self):
         self._db_manager.cleanup()

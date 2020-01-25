@@ -74,9 +74,19 @@ class DbManager(object):
                     p[col] = record.__dict__[col]
         return p
 
+    def get_clip_by_audio_id(self, audio_id):
+        return self.session.query(Clip).filter_by(audio_from_clip=audio_id).first()
+
     def clear_clips_table(self):
         for row in self.get_all_clips():
             self.session.delete(row)
+        self.session.flush()
+
+    def remove_clip(self, clip):
+        """
+        Remove single row from clips table
+        """
+        self.session.delete(clip)
         self.session.flush()
 
     def clear_video_features(self):
@@ -138,6 +148,13 @@ class DbManager(object):
     def clear_audio_table(self):
         for row in self.get_all_audio():
             self.session.delete(row)
+        self.session.flush()
+
+    def remove_audio(self, audio):
+        """
+        Remove single row from audio table
+        """
+        self.session.delete(audio)
         self.session.flush()
 
     def clear_audio_features(self):
