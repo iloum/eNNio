@@ -3,11 +3,11 @@ class MLModel(object):
         self.name = name
         pass
 
-    def train_ml_model(self, train_data):
+    def train_ml_model(self, vdata, adata, mdata):
         raise NotImplementedError
 
-    def evaluate_ml_model(self, test_data):
+    def evaluate_ml_model(self, vdata, adata, mdata):
         raise NotImplementedError
 
-    def predict_ml_model(self, x_new):
+    def predict_ml_model(self, vdata, adata, mdata, video_new):
         raise NotImplementedError
