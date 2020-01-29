@@ -206,9 +206,9 @@ class EnnIOCore:
 
     def _get_audio_extractor_config(self):
         config = self._config_manager.get_all_fields(label='AUDIO')
-        return {"mid_window": int(config["mid-term-window"]),
+        return {"mid_window": float(config["mid-term-window"]),
                "mid_step": float(config["mid-term-step"]),
-               "short_window": int(config["short-term-window"]),
+               "short_window": float(config["short-term-window"]),
                "short_step": float(config["short-term-step"])}
 
     def extract_features(self):
