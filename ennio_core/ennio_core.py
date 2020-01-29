@@ -108,14 +108,24 @@ class EnnIOCore:
     #     self.extract_features(input_file)
     #     # TODO: Call MLcore
 
-    def download_video_from_url(self, url):
+    def download_video_from_url(self, url, start_time_str):
         """
         Method to download a video file from a youtube URL
         :param url: A youtube video URL
+        :param start_time_str: Clip start time
         :return: Downloaded file name
         """
+        clips = self._db_manager.get_clips_by_url(url)
+        if clips:
+            print("URL already in DB")
+            return
+        if start_time_str:
+            start_time = self._time_string_to_seconds(start_time_str)
+        else:
+            start_time = 0
         try:
-            return self._download_video_from_entry(url, None, None)
+            return self._download_video_from_entry(url, start_time,
+                                                   start_time+20)
         except EnnIOException:
             return
 

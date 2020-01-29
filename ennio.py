@@ -54,12 +54,25 @@ class UserInterface(Cmd):
         if not args:
             print("Youtube URL needed for download")
             return
-        if not re.match(VALID_URL, args):
+        inputs = args.split()
+        if not re.match(VALID_URL, inputs[0]):
             print("Not valid url")
             return
-        file_path = self.ennio_core.download_video_from_url(url=args)
+
+        start_time = None
+        try:
+            start_time = inputs[1]
+            if ":" not in start_time:
+                print("Not valid start-time format - Valid format MM:SS")
+                return
+        except IndexError:
+            pass
+        print(inputs[0])
+        print(start_time)
+        file_path = self.ennio_core.download_video_from_url(url=inputs[0],
+                                                            start_time_str=start_time)
         if file_path:
-            print('Downloaded files')
+            print('Downloaded file')
             print(file_path)
         else:
             print('Failed to download')
