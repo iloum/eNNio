@@ -8,3 +8,7 @@ def home(request):
 
 def user_input(request):
     return render(request, 'web_evaluator/user-input.html')
+
+
+def wait(request):
+    return render(request, 'web_evaluator/wait.html')

@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-          <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-    <title>ennIO evaluator home</title>
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+              integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+        <title>ennIO evaluator home</title>
     <style>
       * {
       box-sizing: border-box;
@@ -139,8 +140,10 @@
         handle 20 second videos. But don't worry if your video is larger than that! Simply input the starting timestamp
         of the portion of the video you want to score, and ennIO will extract the next 20 seconds.
     </main>
-    <button onclick="window.location.href = 'evaluator/input/';">Next</button>
+<!--         <input type="button" onclick="window.location.href = 'evaluator/input/';" value="Next"/>-->
+          <button type="submit" formaction='evaluator/input/'>Next</button>
       </div>
     </form>
+<!--    <button onclick="window.location.href = 'evaluator/input/';">Next</button>-->
 </body>
 </html>
