@@ -13,7 +13,7 @@ def audio_header():
 
 
 def evaluation_header():
-    return "clip_id", "url", "clip_title", "clip_path", "video_features", "audio_from_clip", "voted_model"
+    return "clip_id", "url", "clip_title", "clip_path", "video_features", "audio_id", "voted_model"
 
 
 class Audio(Base):
@@ -130,7 +130,7 @@ class UserEvaluation(Base):
         self.end_time = end_time
         self.clip_path = clip_path
         self.video_features = video_features
-        self.audio_from_clip = audio_id
+        self.audio_id = audio_id
         self.voted_model = voted_model
 
     def __repr__(self):
@@ -142,9 +142,9 @@ class UserEvaluation(Base):
                                                                   url=self.url,
                                                                   path=self.clip_path,
                                                                   feat=self.video_features,
-                                                                  audio=self.audio_from_clip,
+                                                                  audio=self.audio_id,
                                                                   model=self.voted_model)
 
     def get_row(self):
-        return (self.clip_id, self.url, self.clip_title, self.clip_path, self.video_features, self.audio_from_clip,
+        return (self.clip_id, self.url, self.clip_title, self.clip_path, self.video_features, self.audio_id,
                 self.voted_model)
