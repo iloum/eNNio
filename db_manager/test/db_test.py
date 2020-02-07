@@ -45,6 +45,5 @@ class MyTestCase(unittest.TestCase):
         self.assertIs(type(p["video_features"]), np.ndarray)
 
 
-
 if __name__ == '__main__':
     unittest.main()

@@ -4,7 +4,7 @@ from sqlalchemy.orm import create_session
 import numpy as np
 import os
 
-from db_manager.data_schema import Base, Clip, clip_header, Audio, audio_header, Feature
+from db_manager.data_schema import Base, Clip, clip_header, Audio, audio_header, Feature, UserEvaluation, evaluation_header
 
 
 class DbManager(object):
@@ -38,7 +38,7 @@ class DbManager(object):
     def cleanup(self):
         self.session.close()
 
-    #CLIPS
+    # CLIPS
     def add_clip(self, clip_id="", url="", start_time=0, end_time=0,
                  clip_title="", clip_description="", clip_path="",
                  video_features=None, audio_from_clip=""):
@@ -63,16 +63,8 @@ class DbManager(object):
     def video_exists(self, video_id):
         return self.session.query(Clip).filter_by(clip_id=video_id).all()
 
-    def get_clip_by_id(self, clip_id=""):
-        q = self.session.query(Clip).filter(Clip.clip_id == clip_id).all()
-        p = dict.fromkeys(clip_header(), "0")
-        for record in q:
-            for col in clip_header():
-                if col == "video_features":
-                    p[col] = np.frombuffer(record.__dict__[col])
-                else:
-                    p[col] = record.__dict__[col]
-        return p
+    def get_clip_by_id(self, id):
+        return self.session.query(Clip).filter_by(clip_id=id).all()
 
     def get_clip_by_audio_id(self, audio_id):
         return self.session.query(Clip).filter_by(audio_from_clip=audio_id).first()
@@ -108,27 +100,7 @@ class DbManager(object):
         table.extend([clip.get_row() for clip in clips])
         return tuple(table)
 
-    @staticmethod
-    def get_indexes_for_clip_attributes(header):
-        """
-        Maps provided table header with the header defined in schema
-        :param header: a tuple containing the header
-        :return: a dict that maps indexes of header elements to the clip elements
-        """
-        return dict([(attribute, header.index(attribute)) for attribute in clip_header() if attribute in header])
-
-    @staticmethod
-    def get_clip_attributes_from_row(attributes_to_index, row):
-        clip_args = dict()
-        for key, index in attributes_to_index.items():
-            value = row[index]
-            if value:
-                clip_args[key] = row[index]
-        if not clip_args["author"] or not clip_args["title"]:
-            raise exc.InvalidInputException
-        return clip_args
-
-    #AUDIO
+    # AUDIO
     def add_audio(self, audio_id="", audio_features=None, audio_path=""):
         new_audio = Audio(audio_id=audio_id,
                           audio_features=audio_features.tostring() if
@@ -139,11 +111,11 @@ class DbManager(object):
 
     def audio_exists(self, audio_id):
         return self.session.query(Audio).filter(Audio.audio_id ==
-                                               audio_id).all()
+                                                audio_id).all()
 
     def get_audio_by_id(self, audio_id):
         return self.session.query(Audio).filter(Audio.audio_id ==
-                                               audio_id).first()
+                                                audio_id).first()
 
     def clear_audio_table(self):
         for row in self.get_all_audio():
@@ -202,3 +174,68 @@ class DbManager(object):
             if not self.session.query(Feature).filter(Feature.features_type == features_type).first():
                 self.session.add(Feature(features_type=features_type))
                 self.session.flush()
+
+    # User Evaluation
+    def add_evaluation_clip(self, clip_id="", url="", start_time=0, end_time=0, clip_title="", clip_path="",
+                            video_features=None, audio_id="", voted_model=0):
+        new_clip = UserEvaluation(clip_id=clip_id, url=url, start_time=start_time, end_time=end_time,
+                                  clip_title=clip_title,
+                                  clip_path=clip_path,
+                                  video_features=video_features.tostring() if
+                                  video_features else "",
+                                  audio_id=audio_id,
+                                  voted_model=voted_model)
+        self.session.add(new_clip)
+        self.session.flush()
+
+    def evaluation_url_exists(self, url):
+        clips = self.session.query(UserEvaluation).filter_by(url=url).all()
+        return True if clips else False
+
+    def get_evaluation_clips_by_url(self, url):
+        return self.session.query(UserEvaluation).filter_by(url=url).all()
+
+    def get_evaluation_clips_by_id(self, id):
+        return self.session.query(UserEvaluation).filter_by(clip_id=id).all()
+
+    def evaluation_video_exists(self, video_id):
+        return self.session.query(UserEvaluation).filter_by(clip_id=video_id).all()
+
+    def get_evaluation_clip_by_audio_id(self, audio_id):
+        return self.session.query(UserEvaluation).filter_by(audio_id=audio_id).first()
+
+    def clear_user_evaluation_table(self):
+        for row in self.get_all_evaluation_clips():
+            self.session.delete(row)
+        self.session.flush()
+
+    def remove_evaluation_clip(self, clip):
+        """
+        Remove single row from clips table
+        """
+        self.session.delete(clip)
+        self.session.flush()
+
+    def clear_evaluation_video_features_(self):
+        for row in self.get_all_evaluation_clips():
+            row.video_features = ""
+        self.session.flush()
+
+    def get_all_evaluation_clips(self):
+        return self.session.query(UserEvaluation).all()
+
+    def dump_evaluation_clips(self):
+        """
+        Dumps all entries to a 2-D array
+        :return: a tuple containing row entries as tuples
+        """
+        clips = self.get_all_evaluation_clips()
+        table = list()
+        table.append(evaluation_header())
+        table.extend([clip.get_row() for clip in clips])
+        return tuple(table)
+
+    def update_voted_model(self, id, voted_model):
+        instance = self.session.query(UserEvaluation).filter(UserEvaluation.clip_id == id).first()
+        instance.voted_model = voted_model
+        self.session.flush()

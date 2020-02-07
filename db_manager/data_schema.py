@@ -12,6 +12,10 @@ def audio_header():
     return "audio_id", "audio_features", "audio_path"
 
 
+def evaluation_header():
+    return "clip_id", "url", "clip_title", "clip_path", "video_features", "audio_id", "voted_model"
+
+
 class Audio(Base):
     __tablename__ = 'audio'
     audio_id = sql.Column("audio_id", sql.String, primary_key=True)
@@ -44,7 +48,7 @@ class Clip(Base):
     clip_path = sql.Column(sql.String)
     video_features = sql.Column("video_features", sql.String)
     audio_from_clip = sql.Column(
-        sql.String)  # for training set this column is equal to clip_id. For unknown clips this column will point to the audio of another clip in this table
+        sql.String)
 
     def __init__(self,
                  clip_id="",
@@ -94,3 +98,53 @@ class Feature(Base):
 
     def get_row(self):
         return self.features_type, self.feature_names
+
+
+class UserEvaluation(Base):
+    __tablename__ = 'user evaluation'
+    clip_id = sql.Column(sql.String, primary_key=True)
+    clip_title = sql.Column(sql.String)
+    url = sql.Column(sql.String)
+    start_time = sql.Column(sql.Integer)
+    # start time + 20 from download_video_from_url
+    end_time = sql.Column(sql.Integer)
+    clip_path = sql.Column(sql.String)
+    video_features = sql.Column("video_features", sql.String)
+    audio_id = sql.Column(sql.String)
+    voted_model = sql.Column(sql.Integer)
+
+    def __init__(self,
+                 clip_id="",
+                 url="",
+                 start_time=0,
+                 end_time=0,
+                 clip_title="",
+                 clip_path="",
+                 video_features="",
+                 audio_id="",
+                 voted_model=0):
+        self.clip_id = clip_id
+        self.clip_title = clip_title
+        self.url = url
+        self.start_time = start_time
+        self.end_time = end_time
+        self.clip_path = clip_path
+        self.video_features = video_features
+        self.audio_id = audio_id
+        self.voted_model = voted_model
+
+    def __repr__(self):
+        return "{id}, {url}, {start_time}, {end_time}," \
+               "{title}, {path}, {feat}, {audio}, {model}".format(id=self.clip_id,
+                                                                  title=self.clip_title,
+                                                                  start_time=self.start_time,
+                                                                  end_time=self.end_time,
+                                                                  url=self.url,
+                                                                  path=self.clip_path,
+                                                                  feat=self.video_features,
+                                                                  audio=self.audio_id,
+                                                                  model=self.voted_model)
+
+    def get_row(self):
+        return (self.clip_id, self.url, self.clip_title, self.clip_path, self.video_features, self.audio_id,
+                self.voted_model)
