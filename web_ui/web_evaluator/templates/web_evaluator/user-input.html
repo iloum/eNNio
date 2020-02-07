@@ -1,9 +1,52 @@
 {% extends "web_evaluator/base.html" %}
 {% block content %}
-    <h1>Please input your URL</h1>
-    <input type="url" placeholder="Youtube URL">
-    <input type="text" placeholder="Start Timestamp 'min:sec'">
+<form id="url_form" class="decor" action="/evaluator/input/hello-world" method="post">
+    <div class="form-left-decoration"></div>
+    <div class="form-right-decoration"></div>
+    <div class="circle"></div>
+    <div class="form-inner">
+        <h1>Please input your URL</h1>
+        <input name="url_input" type="url" placeholder="Youtube URL">
+        <input name="text_input" type="text" placeholder="Start Timestamp 'min:sec'">
+        <button id="submit_button" type="submit">Submit</button>
+    </div>
+</form>
+
 {% endblock content%}
-{% block buttons %}
-    <button type="submit" formaction="/evaluator/wait/">Submit</button>
-{% endblock buttons%}
+{% block js %}
+<script>
+$(document).ready(function(){
+
+   $("#url_form").submit(function(event){
+        event.preventDefault(); //prevent default action
+        var post_url = $(this).attr("action"); //get form action url
+        var request_method = $(this).attr("method"); //get form GET/POST method
+        var form_data = $(this).serialize(); //Encode form elements for submission
+
+        console.log(post_url);
+        console.log(request_method);
+        console.log(form_data);
+
+        $.ajax({
+            url : post_url,
+            type: request_method,
+            data : form_data
+        }).done(function(response){
+            console.log(response.error)
+            if(response.error == true){
+                alert("provlhmia");
+            }
+        });
+    });
+
+
+});
+
+
+
+
+
+
+
+</script>
+{% endblock js %}
