@@ -17,12 +17,9 @@ class WebEnnio(object):
         :param start_time_str: start time in string format
         :return: paths: a list of 4 combined videos in the form of tuples (id, model, path)
         """
-        try:
-            if any(i.isalpha() for i in start_time_str):
-                raise
-            paths = []
-        except exc.EnnIOException("start time must be just digits!"):
-            raise
+        paths = []
+        if any(i.isalpha() for i in start_time_str):
+            raise exc.EnnIOException("start time must be just digits!")
         return paths
 
     def update_winner(self, winner_id, winner_model):
@@ -31,13 +28,9 @@ class WebEnnio(object):
         :param winner_model:
         :return:
         """
-        try:
-            if not isinstance(winner_model, str):
-                raise
-            path = ""
-        except exc.EnnIOException("winner model must be in string format!"):
-            raise
-
+        if not isinstance(winner_model, str):
+            raise exc.EnnIOException("winner model must be in string format!")
+        path = ""
         return
 
     def live_ennio(self, url,start_time_str):
@@ -47,15 +40,12 @@ class WebEnnio(object):
         :param start_time_str: starting time
         :return: the path of the combined video
         """
-        try:
-            if any(i.isalpha() for i in start_time_str):
-                raise
-            path = ""
-        except exc.EnnIOException("start time must be just digits!"):
-            raise
+        path = ""
+        if any(i.isalpha() for i in start_time_str):
+            raise exc.EnnIOException("start time must be just digits!")
         return path
 
 # for my testing
 #if __name__=='__main__':
 #    we = WebEnnio()
-#    print(we.evaluation_mode("","12"))
+#    print(we.evaluation_mode("","1a"))
