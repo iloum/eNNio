@@ -167,7 +167,7 @@ class EnnIOCore:
         """
         downloaded_videos = list()
         failed_videos = set()
-        for row in self._read_url_file():
+        for index, row in self._read_url_file():
             title = row['Film']
             url = row['URL']
             start_time_str = row['Start']
@@ -182,16 +182,19 @@ class EnnIOCore:
                         file_path = self._download_video_from_entry(url, start_time, start_time + 20, comment=comment)
                         downloaded_videos.append(file_path)
                     except EnnIOException:
-                        failed_videos.add("{title}, {url}, {start}, {end}, {comment}".format(title=title,
-                                                                                             url=url,
-                                                                                             start=start_time_str,
-                                                                                             end=end_time_str,
-                                                                                             comment=comment))
+                        failed_videos.add("{index}. {title}, {url}, {start}, "
+                                          "{end}, {comment}".format(index=index,
+                                                                    title=title,
+                                                                    url=url,
+                                                                    start=start_time_str,
+                                                                    end=end_time_str,
+                                                                    comment=comment))
+                        break
                 start_time += 20
 
         return downloaded_videos, failed_videos
 
-    def _download_video_from_entry(self, url, start_time, end_time, comment=""):
+    def _download_video_from_entry(self, url, start_time, end_time, comment="", mismatch_url="", mismatch_title=""):
         available_cpus = multiprocessing.cpu_count()
         if available_cpus > 1:
             available_cpus -= 1
@@ -224,7 +227,9 @@ class EnnIOCore:
                                       clip_path=video_file_path,
                                       clip_title=video_stream_name,
                                       clip_description=comment,
-                                      audio_from_clip=audio_stream_id)
+                                      audio_from_clip=audio_stream_id,
+                                      mismatch_url=mismatch_url,
+                                      mismatch_title=mismatch_title)
         return video_file_path
 
     def get_status(self):
@@ -302,8 +307,10 @@ class EnnIOCore:
 
     def _read_url_file(self):
         with open(self._url_list_file_location, encoding='utf-8-sig') as csv_file:
+            index = 1
             for row in csv.DictReader(csv_file):
-                yield row
+                index += 1
+                yield index, row
 
     @staticmethod
     def _get_id(file_path):
