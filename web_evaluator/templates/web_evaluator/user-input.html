@@ -1,6 +1,6 @@
 {% extends "web_evaluator/base.html" %}
 {% block content %}
-<form id="url_form" class="decor" action="/evaluator/input/hello-world" method="post">
+<form id="url_form" class="decor" action="/evaluator/results/" method="post">
     <div class="form-left-decoration"></div>
     <div class="form-right-decoration"></div>
     <div class="circle"></div>
@@ -33,7 +33,7 @@ $(document).ready(function(){
         }).done(function(response){
             console.log(response.error)
             if(response.error == true){
-                alert("provlhmia");
+                alert("you are an idiot");
             }
         });
     });

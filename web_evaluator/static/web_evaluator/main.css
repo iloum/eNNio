@@ -13,10 +13,6 @@ input, textarea {
     outline: none;
 }
 body {
-    position: relative;
-    width: 80%;
-    border-radius: 30px;
-    background: #fff;
     display: flex;
     justify-content: center;
     align-items: center;
