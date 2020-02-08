@@ -173,13 +173,18 @@ class EnnIOCore:
             start_time_str = row['Start']
             end_time_str = row['End']
             comment = row['Comment']
+            mismatch_url = row['Mismatch URL']
+            mismatch_title = row['Mismatch Title']
             start_time = self._time_string_to_seconds(start_time_str)
             end_time = self._time_string_to_seconds(end_time_str)
 
             while start_time < end_time:
                 if not self._clip_exists(url, start_time, start_time + 20):
                     try:
-                        file_path = self._download_video_from_entry(url, start_time, start_time + 20, comment=comment)
+                        file_path = self._download_video_from_entry(url, start_time, start_time + 20,
+                                                                    comment=comment,
+                                                                    mismatch_title=mismatch_title,
+                                                                    mismatch_url=mismatch_url)
                         downloaded_videos.append(file_path)
                     except EnnIOException:
                         failed_videos.add("{index}. {title}, {url}, {start}, "
