@@ -340,7 +340,7 @@ class EnnIOCore:
         video_features = dict()
         audio_features = dict()
         metadata = dict()
-        metadata_columns = ['Title', 'Url', 'Video file path', 'Audio file path']
+        metadata_columns = ['Title', 'Url', 'Video file path', 'Audio file path', 'Mismatch Title', 'Mismatch URL']
         for clip in self._db_manager.get_all_clips():
             audio = self._db_manager.get_audio_by_id(clip.audio_from_clip)
             video_features_exist_in_db = clip.video_features != ""
@@ -349,7 +349,8 @@ class EnnIOCore:
             if video_features_exist_in_db and audio_feature_exist_in_db:
                 video_features[clip.clip_id] = np.frombuffer(clip.video_features)
                 audio_features[clip.clip_id] = np.frombuffer(audio.audio_features)
-                metadata[clip.clip_id] = [clip.clip_title, clip.url, clip.clip_path, audio.audio_path]
+                metadata[clip.clip_id] = [clip.clip_title, clip.url, clip.clip_path, audio.audio_path,
+                                          clip.mismatch_title, clip.mismatch_url]
 
         video_df = pd.DataFrame.from_dict(video_features, orient='index',
                                           columns=self._video_feature_names)
