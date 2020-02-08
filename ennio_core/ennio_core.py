@@ -12,7 +12,7 @@ from db_manager.db_manager import DbManager
 from feature_extractor.video_feature_exractor import VideoFeatureExtractor
 from feature_extractor.audio_feature_extractor import AudioFeatureExtractor
 from functools import reduce
-# from ml_core.ml_core import MLCore
+from ml_core.ml_core import MLCore
 
 
 class EnnIOCore:
@@ -22,7 +22,7 @@ class EnnIOCore:
         self._db_manager = DbManager()
         self._video_feature_extractor = VideoFeatureExtractor()
         self._audio_feature_extractor = AudioFeatureExtractor()
-        # self._ml_core = MLCore()
+        self._ml_core = MLCore()
         self._video_download_dir = None
         self._data_dir = None
         self._url_list_file_location = None
@@ -30,6 +30,9 @@ class EnnIOCore:
         self._audio_stream_dir = None
         self._video_feature_names = None
         self._audio_feature_names = None
+        self._model_dir = None  # added for models by IL 8/2
+        self._models = list()
+        self._predict_results = dict()
 
     def setup(self):
         self._config_manager.read_config()
@@ -44,6 +47,7 @@ class EnnIOCore:
         self._db_manager.setup(os.path.join(self._data_dir, self._config_manager.get_field('db-file-name')))
         self._video_feature_names = self._db_manager.get_video_feature_names()
         self._audio_feature_names = self._db_manager.get_audio_feature_names()
+        self._model_dir = os.path.join(self._data_dir, "models")  # added for models by IL 8/2
         self._check_db_consistency()
 
     def _create_directories(self):
@@ -86,27 +90,53 @@ class EnnIOCore:
     def on_exit(self):
         self._db_manager.cleanup()
 
-    # def construct_model(self):
-    #     """
-    #     Method to create and train an ML model
-    #     :return:
-    #     """
-    #     self.download_video_from_url_file()
-    #     self.extract_features(os.listdir(self._video_download_dir))
-    #     #TODO: Call MLcore
-    #     where_models_will_be_saved = "IN THIS PATH"
-    #     self._ml_core.create_model("ANN", where_models_will_be_saved)
-    #     # ....
-    #     #TODO: To be corrected and changed or tell me what to do... :)
+    def construct_model(self):
+        """
+        Method to create and train an ML model. Instantiates MLCore and creates various models.
+        If the models are not trained, then they are trained and saved.
+        :return:
+        """
+        # self.download_video_from_url_file()
+        # self.extract_features(os.listdir(self._video_download_dir))
+        vid_df, aud_df, met_df = self.create_dataframe_files()
 
-    # def use_model(self, input_file):
-    #     """
-    #     Method to use the existing model in order to predict a
-    #     suitable music score
-    #     :return:
-    #     """
-    #     self.extract_features(input_file)
-    #     # TODO: Call MLcore
+        self._ml_core.set_video_dataframe(vid_df)
+        self._ml_core.set_audio_dataframe(aud_df)
+        self._ml_core.set_metadata_dataframe(met_df)
+
+        # when more models are available, we can simple define the in the config file (their names) and a
+        # loop in this point will create them.
+        ann_model, ann_trained = self._ml_core.create_model("ANN", self._model_dir)
+        # matching_model = self._ml_core.create_model("Matching", self.model_dir)
+        # more models to come
+        if not ann_trained:
+            ann_model.train_model()
+            ann_model.save_ml_core()
+
+        self._models.append(ann_model)
+
+    def use_model(self, new_vid_ftrs):#input_file):
+        """
+        Method to use the existing model in order to predict a
+        suitable music score. It assumes that the construct_model above has been called before
+        in order to create the models ans store them in a list
+        :return:
+        """
+        # self.extract_features(input_file)
+
+        ## code with double brackets was used for testing
+        ##import random
+        ##vid_df, _, _ = self.create_dataframe_files()
+        ##vindex_lst = list(vid_df.index.values)
+        ##vindex = random.choice(vindex_lst)
+        ##new_vid_ftrs = vid_df.loc[vindex].values
+
+        for model in self._models:
+            self._predict_results[model.get_name] = model.predict(new_vid_ftrs)
+
+        print(self._predict_results)
+
+
 
     def download_video_from_url(self, url, start_time_str):
         """
@@ -336,6 +366,7 @@ class EnnIOCore:
         metadata_df.to_pickle(os.path.join(self._data_dir,metadata_file))
         print("Saved to {file_name}".format(file_name=metadata_file))
 
+        return video_df, audio_df, metadata_df
 
 
     @staticmethod

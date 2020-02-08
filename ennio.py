@@ -31,20 +31,20 @@ class UserInterface(Cmd):
 
     do_EOF = do_exit
 
-    # def do_construct_model(self, args):
-    #     """
-    #     Create and train a model
-    #     """
-    #     self.ennio_core.construct_model()
+    def do_construct_model(self, args):
+        """
+        Create and train a model
+        """
+        self.ennio_core.construct_model()
 
-    # def do_use_model(self, args):
-    #     """
-    #     Use an existing model to predict the score
-    #     Usage: use_model <filename>
-    #     """
-    #     if not args:
-    #         print("Video file name needed")
-    #     self.ennio_core.use_model(input_file=args)
+    def do_use_model(self, args):
+        """
+        Use an existing model to predict the score
+        Usage: use_model <filename>
+        """
+        #if not args:
+        #    print("Video file name needed")
+        self.ennio_core.use_model("something") #input_file=args)
 
     def do_download_video_from_url(self, args):
         """

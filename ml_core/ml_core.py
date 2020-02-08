@@ -1,7 +1,7 @@
 import pickle
 from ml_core.ml_ANN import ANN
 from utilities import file_management as fm
-
+import os
 
 class MLCore:
     def __init__(self):
@@ -14,6 +14,7 @@ class MLCore:
         self.video_df = None
         self.audio_df = None
         self.meta_df = None
+        self.model_path = None
 
         pass
 
@@ -26,16 +27,24 @@ class MLCore:
     def set_metadata_dataframe(self, m_df):
         self.meta_df = m_df
 
+    def get_name(self):
+        return self.name
+
     def create_model(self, model_name, model_path):
         self.name = model_name
+        self.model_path = model_path
+        trained = False  # if the model is trained and loaded from a pickle do not train it again
         stored_models = fm.getfiledictionary(path=model_path)
         if model_name == "ANN":
             if model_name in stored_models.keys():  # if model exist, load it
                 self.modelclass = pickle.load(open(stored_models[model_name], "rb"))
+                trained = True
             else:  # else create it
                 _, insize = self.video_df.shape
                 _, outsize = self.audio_df.shape
-                self.modelclass = ANN("ANN", batch_size=64, epochs=100, input_size=insize, output_size=outsize)
+                self.modelclass = ANN("ANN", batch_size=64, epochs=100, input_size=insize, output_size=outsize-1)  #-1 because I will remove 1 column
+                trained = False
+        return self, trained
 
     def train_model(self):
         """
@@ -71,7 +80,8 @@ class MLCore:
         :param filename: Name of the file to save model to
         :return:
         """
-        pickle.dump(self.modelclass, open(self.name, "wb"))
+
+        pickle.dump(self.modelclass, open(os.path.join(self.model_path, self.name), "wb"))
         return True
 
 
