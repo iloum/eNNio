@@ -138,12 +138,7 @@ class EnnIOCore:
 
         self.construct_model()
 
-        #for testing
-        #url = "https://www.youtube.com/watch?v=wnNPJaCmTGw"
-        #start_time = 0
-
         new_vid_ftrs = self.get_video_features_for_prediction(url, start_time, start_time+20)
-        print(new_vid_ftrs.shape)
 
         for model in self._models:
             self._predict_results[model.get_name()] = model.predict(new_vid_ftrs)
