@@ -1,13 +1,13 @@
 {% extends "web_evaluator/base.html" %}
 {% block content %}
-<form id="url_form" class="decor" action="/evaluator/results/" method="post">
+<form id="url_form" class="decor" action="results/" method="post">
     <div class="form-left-decoration"></div>
     <div class="form-right-decoration"></div>
     <div class="circle"></div>
     <div class="form-inner">
         <h1>Please input your URL</h1>
         <input name="url_input" type="url" placeholder="Youtube URL">
-        <input name="text_input" type="text" placeholder="Start Timestamp 'min:sec'">
+        <input name="timestamp_input" type="text" placeholder="Start Timestamp 'min:sec'">
         <button id="submit_button" type="submit">Submit</button>
     </div>
 </form>
@@ -33,7 +33,7 @@ $(document).ready(function(){
         }).done(function(response){
             console.log(response.error)
             if(response.error == true){
-                alert("you are an idiot");
+                alert(response.error_prompt);
             }
         });
     });
