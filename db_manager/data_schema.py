@@ -43,6 +43,8 @@ class Clip(Base):
     clip_description = sql.Column(sql.String)
     clip_title = sql.Column(sql.String)
     url = sql.Column(sql.String)
+    mismatch_title = sql.Column(sql.String)
+    mismatch_url = sql.Column(sql.String)
     start_time = sql.Column(sql.Integer)
     end_time = sql.Column(sql.Integer)
     clip_path = sql.Column(sql.String)
@@ -59,7 +61,9 @@ class Clip(Base):
                  clip_description="",
                  clip_path="",
                  video_features="",
-                 audio_from_clip=""):
+                 audio_from_clip="",
+                 mismatch_url="",
+                 mismatch_title=""):
         self.clip_id = clip_id
         self.clip_description = clip_description
         self.clip_title = clip_title
@@ -69,6 +73,8 @@ class Clip(Base):
         self.clip_path = clip_path
         self.video_features = video_features
         self.audio_from_clip = audio_from_clip
+        self.mismatch_title = mismatch_title
+        self.mismatch_url = mismatch_url
 
     def __repr__(self):
         return "{id}, {url}, {start_time}, {end_time}," \
