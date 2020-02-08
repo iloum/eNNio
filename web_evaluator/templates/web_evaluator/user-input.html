@@ -34,6 +34,9 @@ $(document).ready(function(){
             console.log(response.error)
             if(response.error == true){
                 alert(response.error_prompt);
+            } else {
+                alert(response.url);
+                window.location.href = response.url;
             }
         });
     });

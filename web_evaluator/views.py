@@ -31,7 +31,7 @@ def results(request):
     else:
         data = {
             'error': False,
-            'url': 'evaluator-results',
+            'url': 'display?variable1=1&variable2=2',
         }
         return JsonResponse(data)
 #    try:
@@ -41,7 +41,10 @@ def results(request):
 # Kanw logikous elegxous sta data
 
 
-
+def display(request):
+    var1 = request.GET.get('variable1', None)
+    var2 = request.GET.get('variable2', None)
+    return render(request, 'web_evaluator/results.html', {'title': 'Display', 'var1': var1, 'var2': var2})
 
 def wait(request):
     return render(request, 'web_evaluator/wait.html', {'title': 'Please Wait...'})
