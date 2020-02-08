@@ -1,13 +1,24 @@
 {% extends "web_evaluator/base.html" %}
 {% block content %}
+
+
+<body>
+<div class="body-left-decoration"></div>
+<div class="body-right-decoration"></div>
+<div class="body-circle"></div>
+<div class="w3-panel w3-white w3-section w3-round-xxlarge w3-margin" style="width:60%;">
     <h1>Thanks for helping us make ennIO better.</h1>
     <h2>Let's get started!</h2>
-    <main>
-        You will be asked to input a video URL that you'd like to choose a soundtrack for. At the moment ennIO can only
-        handle 20 second videos. But don't worry if your video is larger than that! Simply input the starting timestamp
-        of the portion of the video you want to score, and ennIO will extract the next 20 seconds.
-    </main>
+    <p class="text-justify">You will be asked to input a video URL that you'd like to choose a soundtrack for.
+        At the moment ennIO can only handle 20 second videos. But don't worry if your video is larger than that!
+        Simply input the starting timestamp of the portion of the video you want to score, and ennIO will
+        extract the next 20 seconds.</p>
+    <p>
+        <a class="next" href={% url 'evaluator-input'%}> Next &raquo;</a>
+    </p>
+</div>
+
+</body>
+
+
 {% endblock content%}
-{% block buttons %}
-     <a class="next" href={% url 'evaluator-input'%}> Next &raquo;</a>
-{% endblock buttons%}
