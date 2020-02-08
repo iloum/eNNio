@@ -104,8 +104,8 @@ class ANN(MLModel):
         neigh = KNeighborsClassifier(n_neighbors=1, algorithm="brute", p=2)
         neigh.fit(x_knn, y_knn)
 
-        video_new_new_reshaped = video_new.reshape((1, self.input_size))
-        video_new_scaled = video_scaler.transform(video_new_new_reshaped)
+        video_new_nparray = video_new.values  #video_new.reshape((1, self.input_size))
+        video_new_scaled = video_scaler.transform(video_new_nparray)
         ann_prediction = self.model.predict(video_new_scaled)
 
         knn_predict = neigh.predict(ann_prediction)

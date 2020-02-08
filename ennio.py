@@ -42,9 +42,14 @@ class UserInterface(Cmd):
         Use an existing model to predict the score
         Usage: use_model <filename>
         """
-        #if not args:
-        #    print("Video file name needed")
-        self.ennio_core.use_model("something") #input_file=args)
+        # input example in terminal: ennIO> use_model https://www.youtube.com/watch?v=i-dJPoSlPfU 10
+        if not args:
+            print("Video url and start time are needed")
+        else:
+            input = "".join(args).split(" ")
+            url = input[0]
+            start_time = int(input[1])
+            self.ennio_core.use_model(url, start_time=start_time) #input_file=args)
 
     def do_download_video_from_url(self, args):
         """

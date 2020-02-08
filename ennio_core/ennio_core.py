@@ -33,6 +33,8 @@ class EnnIOCore:
         self._model_dir = None  # added for models by IL 8/2
         self._models = list()
         self._predict_results = dict()
+        self._video_live_dir = None
+        self._video_stream_dir_live = None
 
     def setup(self):
         self._config_manager.read_config()
@@ -42,17 +44,27 @@ class EnnIOCore:
         self._video_stream_dir = os.path.join(parsed_dir, 'video')
         self._audio_stream_dir = os.path.join(parsed_dir, 'audio')
         self._url_list_file_location = self._config_manager.get_field('urls-list-file')
+        self._model_dir = os.path.join(self._data_dir, 'models')  # added for models by IL 8/2
+        self._video_live_dir = os.path.join(self._data_dir, 'live')  # added for models by IL 8/2
+        live_parsed_dir = os.path.join(self._video_live_dir, 'parsed')
+        self._video_stream_dir_live = os.path.join(live_parsed_dir, 'video')
         self._create_directories()
         self._data_aquisitor.set_download_location(self._video_download_dir)
         self._db_manager.setup(os.path.join(self._data_dir, self._config_manager.get_field('db-file-name')))
         self._video_feature_names = self._db_manager.get_video_feature_names()
         self._audio_feature_names = self._db_manager.get_audio_feature_names()
+<<<<<<< HEAD
         self._model_dir = os.path.join(self._data_dir, "models")  # added for models by IL 8/2
         self._check_db_consistency()
+=======
+
+
+>>>>>>> changes in:
 
     def _create_directories(self):
         for directory in [self._audio_stream_dir, self._video_download_dir,
-                          self._video_stream_dir]:
+                          self._video_stream_dir, self._model_dir,
+                          self._video_live_dir, self._video_stream_dir_live]:
             os.makedirs(directory, exist_ok=True)
 
     def _check_db_consistency(self):
@@ -115,7 +127,7 @@ class EnnIOCore:
 
         self._models.append(ann_model)
 
-    def use_model(self, new_vid_ftrs):#input_file):
+    def use_model(self, url, start_time):  #input_file):
         """
         Method to use the existing model in order to predict a
         suitable music score. It assumes that the construct_model above has been called before
@@ -124,17 +136,19 @@ class EnnIOCore:
         """
         # self.extract_features(input_file)
 
-        ## code with double brackets was used for testing
-        ##import random
-        ##vid_df, _, _ = self.create_dataframe_files()
-        ##vindex_lst = list(vid_df.index.values)
-        ##vindex = random.choice(vindex_lst)
-        ##new_vid_ftrs = vid_df.loc[vindex].values
+        self.construct_model()
+
+        #for testing
+        #url = "https://www.youtube.com/watch?v=wnNPJaCmTGw"
+        #start_time = 0
+
+        new_vid_ftrs = self.get_video_features_for_prediction(url, start_time, start_time+20)
+        print(new_vid_ftrs.shape)
 
         for model in self._models:
-            self._predict_results[model.get_name] = model.predict(new_vid_ftrs)
+            self._predict_results[model.get_name()] = model.predict(new_vid_ftrs)
 
-        print(self._predict_results)
+        print(self._predict_results["ANN"])
 
 
 
@@ -368,6 +382,45 @@ class EnnIOCore:
 
         return video_df, audio_df, metadata_df
 
+
+    def get_video_features_for_prediction(self, url, start_time, end_time):
+        '''
+        Method to get the features for an external video for processing
+        :param path:
+        :return:
+        '''
+
+        available_cpus = multiprocessing.cpu_count()
+        if available_cpus > 1:
+            available_cpus -= 1
+
+        self._data_aquisitor.set_download_location(self._video_live_dir)
+        temp = self._data_aquisitor.download_from_url(url,
+                                                      start_time=time.strftime("%M:%S", time.gmtime(start_time)),
+                                                      end_time=time.strftime("%M:%S", time.gmtime(end_time)),
+                                                      threads=available_cpus)
+        self._data_aquisitor.set_download_location(self._video_download_dir)
+        if not temp:
+            raise EnnIOException
+        metadata = temp[-1]
+        video_stream_name = os.path.basename(metadata['filenames'][
+                                                 'parsed_video'][-1])
+
+        video_file_path = os.path.join(self._video_stream_dir_live,
+                                       video_stream_name)
+
+
+        video_extractor_kw_args = self._get_video_extractor_config()
+        video_features, video_feature_names = self._video_feature_extractor.extract_video_features(video_file_path, **video_extractor_kw_args)
+
+        size = video_features.shape[0]
+        video_features_reshaped = video_features.reshape((1, size))
+        #print(size)
+        #print(type(video_features_reshaped))
+
+        video_df = pd.DataFrame(video_features_reshaped, columns=video_feature_names)
+
+        return video_df
 
     @staticmethod
     def _time_string_to_seconds(time_string):
