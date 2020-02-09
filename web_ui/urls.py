@@ -21,6 +21,6 @@ from web_ui import settings
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('web_evaluator.urls')),
+    path('', include('web_core.urls')),
     path('evaluator/', include('web_evaluator.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

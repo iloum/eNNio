@@ -1,0 +1,22 @@
+{% extends "web_evaluator/base.html" %}
+{% block content %}
+
+
+<body>
+
+<div class="w3-panel w3-white w3-section w3-round-xxlarge w3-margin" style="width:60%;">
+    <h1>Welcome to ennIO!</h1>
+    <h2>He's a very talented music scorer...</h2>
+    <p class="text-justify">
+        What do you want to do?
+    </p>
+    <p>
+        <a class="next" href={% url 'core-input'%}> Use ennIO &raquo;</a>
+        <a class="next" href={% url 'evaluator-home'%}> Make ennIO better&raquo;</a>
+    </p>
+</div>
+
+</body>
+
+
+{% endblock content%}
