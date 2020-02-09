@@ -15,6 +15,7 @@ from functools import reduce
 from ml_core.ml_core import MLCore
 
 
+
 class EnnIOCore:
     def __init__(self):
         self._config_manager = ConfigManager()
@@ -241,6 +242,7 @@ class EnnIOCore:
                                                  clip_path=video_file_path,
                                                  clip_title=video_stream_name)
         return video_file_path
+
 
     def _download_video_from_entry(self, url, start_time, end_time, comment="", mismatch_url="", mismatch_title=""):
         available_cpus = multiprocessing.cpu_count()
