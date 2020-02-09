@@ -26,6 +26,7 @@ class EnnIOCore:
         self._video_download_dir = None
         self._data_dir = None
         self._url_list_file_location = None
+        self._eval_video_stream_dir = None
         self._video_stream_dir = None
         self._audio_stream_dir = None
         self._video_feature_names = None
@@ -41,6 +42,8 @@ class EnnIOCore:
         self._data_dir = self._config_manager.get_field('data-folder')
         self._video_download_dir = os.path.join(self._data_dir, "downloads")
         parsed_dir = os.path.join(self._video_download_dir, 'parsed')
+        evaluation_dir = os.path.join(self._video_download_dir, 'evaluation')
+        self._eval_video_stream_dir = os.path.join(evaluation_dir, 'video')
         self._video_stream_dir = os.path.join(parsed_dir, 'video')
         self._audio_stream_dir = os.path.join(parsed_dir, 'audio')
         self._url_list_file_location = self._config_manager.get_field('urls-list-file')
@@ -221,7 +224,7 @@ class EnnIOCore:
                                                  'parsed_video'][-1])
         # audio_stream_name = os.path.basename(metadata['filenames'][
         #                                         'parsed_audio'][-1])
-        video_file_path = os.path.join(self._video_stream_dir,
+        video_file_path = os.path.join(self._eval_video_stream_dir,
                                        video_stream_name)
         # audio_file_path = os.path.join(self._audio_stream_dir,
         #                               audio_stream_name)
