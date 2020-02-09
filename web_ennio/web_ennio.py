@@ -63,10 +63,10 @@ class WebEnnio(object):
             raise exc.EnnIOException("start time must be just digits!")
 
         # Download video
-        self.do_download_video_from_url(url, start_time_str)
+        video_name = self.do_download_video_from_url(url, start_time_str)
 
         # Extract video features
-        video_extracted = self.ennio_core.extract_video_features_for_evaluation()
+        video_extracted = self.ennio_core.extract_video_features_for_evaluation(video_name)
 
         # Call predict for all models
 
@@ -114,6 +114,7 @@ class WebEnnio(object):
         if file_path:
             print('Downloaded file')
             print(file_path)
+            return file_path
         else:
             print('Failed to download')
             print(url, start_time)
