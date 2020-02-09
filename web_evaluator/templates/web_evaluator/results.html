@@ -3,87 +3,48 @@
 <div class="w3-row-padding w3-section w3-hide-medium">
     <div class="w3-col w3-half">
         <video controls width="100%">
-            <source src="{{ MEDIA_URL }}{{var1}}" type="video/mp4">
+            <source src="{{ MEDIA_URL }}{{path1}}" type="video/mp4">
             <p>Your browser doesn't support HTML video.</p>
         </video>
-        <div class="w3-center">
-            <button class="w3-button w3-green w3-margin" style="width:30%">Cast vote!</button>
-        </div>
+        <form class="w3-center" id="upvote1" action="vote/" method="post">
+            <button name="video-eval" class="w3-button w3-green w3-margin" style="width:30%" value="upvote">
+                Upvote!
+            </button>
+        </form>
     </div>
     <div class="w3-col w3-half">
         <video controls width="100%">
-            <source src="{{ MEDIA_URL }}{{var1}}" type="video/mp4">
+            <source src="{{ MEDIA_URL }}{{path2}}" type="video/mp4">
             <p>Your browser doesn't support HTML video.</p>
         </video>
-        <div class="w3-center">
-            <button class="w3-button w3-green w3-margin" style="width:30%">Cast vote!</button>
-        </div>
+        <form class="w3-center" id="upvote2" action="vote/" method="post">
+            <button name="video-eval" class="w3-button w3-green w3-margin" style="width:30%" value="upvote">
+                Upvote!
+            </button>
+        </form>
     </div>
     <div class="w3-col w3-half">
         <video controls width="100%">
-            <source src="{{ MEDIA_URL }}{{var1}}" type="video/mp4">
+            <source src="{{ MEDIA_URL }}{{path3}}" type="video/mp4">
             <p>Your browser doesn't support HTML video.</p>
         </video>
-        <div class="w3-center">
-            <button class="w3-button w3-green w3-margin" style="width:30%">Cast vote!</button>
-        </div>
+        <form class="w3-center" id="upvote3" action="vote/" method="post">
+            <button name="video-eval" class="w3-button w3-green w3-margin" style="width:30%" value="upvote">
+                Upvote!
+            </button>
+        </form>
     </div>
     <div class="w3-col w3-half">
         <video controls width="100%">
-            <source src="{{ MEDIA_URL }}{{var1}}" type="video/mp4">
+            <source src="{{ MEDIA_URL }}{{path4}}" type="video/mp4">
             <p>Your browser doesn't support HTML video.</p>
         </video>
-        <div class="w3-center">
-            <button class="w3-button w3-green w3-margin" style="width:30%">Cast vote!</button>
-        </div>
+        <form class="w3-center" id="upvote4" action="vote/" method="post">
+            <button name="video-eval" class="w3-button w3-green w3-margin" style="width:30%" value="upvote">
+                Upvote!
+            </button>
+        </form>
     </div>
 </div>
 
-
-<!--<div class="w3-row">
-    <div class="w3-card-4 w3-margin w3-mobile w3-quarter" style="width:25%">
-        <div class="w3-container w3-center">
-            <video controls width="350" height="350">
-                <source src="{{ MEDIA_URL }}{{var1}}" type="video/mp4">
-                <p>Your browser doesn't support HTML video.</p>
-            </video>
-        </div>
-        <div class="w3-container w3-center w3-margin">
-            <button class="w3-button w3-green">Cast vote!</button>
-        </div>
-    </div>
-    <div class="w3-card-4 w3-quarter w3-margin w3-mobile w3-cell" style="width:25%">
-        <div class="w3-container w3-center">
-            <video controls width="350" height="350">
-                <source src="{{ MEDIA_URL }}{{var1}}" type="video/mp4">
-                <p>Your browser doesn't support HTML video.</p>
-            </video>
-        </div>
-        <div class="w3-container w3-center w3-margin">
-            <button class="w3-button w3-green">Cast vote!</button>
-        </div>
-    </div>
-    <div class="w3-card-4 w3-quarter w3-margin w3-mobile w3-cell" style="width:25%">
-        <div class="w3-container w3-center">
-            <video controls width="350" height="350">
-                <source src="{{ MEDIA_URL }}{{var1}}" type="video/mp4">
-                <p>Your browser doesn't support HTML video.</p>
-            </video>
-        </div>
-        <div class="w3-container w3-center w3-margin">
-            <button class="w3-button w3-green">Cast vote!</button>
-        </div>
-    </div>
-    <div class="w3-card-4 w3-quarter w3-margin w3-mobile w3-cell" style="width:25%">
-        <div class="w3-container w3-center">
-            <video controls width="350" height="350">
-                <source src="{{ MEDIA_URL }}{{var1}}" type="video/mp4">
-                <p>Your browser doesn't support HTML video.</p>
-            </video>
-        </div>
-        <div class="w3-container w3-center w3-margin">
-            <button class="w3-button w3-green">Cast vote!</button>
-        </div>
-    </div>
-</div>-->
 {% endblock content%}
