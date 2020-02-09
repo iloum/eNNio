@@ -207,6 +207,7 @@ class EnnIOCore:
             clips = self._db_manager.get_evaluation_clips_by_url(url)
         else:
             clips = self._db_manager.get_clips_by_url(url)
+
         if clips and mode == "evaluation":
             print("URL already in DB")
             return clips[0].clip_path
@@ -378,7 +379,6 @@ class EnnIOCore:
         Method to extract video features and store in Evaluation table
         :return: extracted video features
         """
-
         video_extractor_kw_args = self._get_video_extractor_config()
 
         video_features, video_feature_names = self._video_feature_extractor.extract_video_features(video_path,
