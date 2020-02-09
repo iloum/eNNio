@@ -31,14 +31,14 @@ mlCORE.set_audio_dataframe(audio_df)
 mlCORE.set_video_dataframe(video_df)
 mlCORE.set_metadata_dataframe(meta_df)
 
-mlCORE.create_model("ANN", model_paths)
-mlCORE.train_model()
-mlCORE.save_ml_core()
+annml = mlCORE.create_model("ANN", model_paths)
+annml.train_model()
+annml.save_ml_core()
 vindex_lst = list(video_df.index.values)
 vindex = random.choice(vindex_lst)
 video_val = video_df.loc[vindex].values
 
-y_pr = mlCORE.predict(video_val)
+y_pr = annml.predict(video_val)
 print("prediction:", y_pr)
 
-mlCORE.evaluate_model()
+annml.evaluate_model()

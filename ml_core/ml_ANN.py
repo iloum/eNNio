@@ -12,6 +12,8 @@ import os
 
 class ANN(MLModel):
     def __init__(self, name, batch_size, epochs, input_size, output_size):
+        os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
+        os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
         self.batch_size = batch_size
         self.epochs = epochs
@@ -48,7 +50,8 @@ class ANN(MLModel):
         :return: the trained model
         '''
 
-        video_data_scl, audio_data_scl, _, _ = dp.apply_minmax_scaler(video_df, audio_df)
+        proc_audio_df = dp.remove_beat_conf_column(audio_df)  # remove columns with None
+        video_data_scl, audio_data_scl, _, _ = dp.apply_minmax_scaler(video_df, proc_audio_df)
 
         self.model.fit(video_data_scl, audio_data_scl,
                        batch_size=self.batch_size,
@@ -67,9 +70,10 @@ class ANN(MLModel):
         :return: loss anc accuracy metrics
         '''
 
-        _, _, video_scaler, audio_scaler = dp.apply_minmax_scaler(video_df, audio_df)
+        proc_audio_df = dp.remove_beat_conf_column(audio_df)  # remove columns with None
+        _, _, video_scaler, audio_scaler = dp.apply_minmax_scaler(video_df, proc_audio_df)
 
-        video_train, video_test, audio_train, audio_test = mu.custom_train_test_split(video_df, audio_df,
+        video_train, video_test, audio_train, audio_test = mu.custom_train_test_split(video_df, proc_audio_df,
                                                                metadata_df, 0.10,
                                                                video_scaler, audio_scaler,
                                                                random_state=42)
@@ -92,23 +96,24 @@ class ANN(MLModel):
         '''
         #ann_mdl = pickle.load(open(os.path.join(self._data_dir, self.name+".pkl"), "rb"))
 
-        _, audio_data_scl, video_scaler, audio_scaler = dp.apply_minmax_scaler(video_df, audio_df)
+        proc_audio_df = dp.remove_beat_conf_column(audio_df) # remove columns with None
+        _, audio_data_scl, video_scaler, audio_scaler = dp.apply_minmax_scaler(video_df, proc_audio_df)
 
         x_knn = audio_data_scl
-        y_knn = list(audio_df.index.values)
+        y_knn = list(proc_audio_df.index.values)
         neigh = KNeighborsClassifier(n_neighbors=1, algorithm="brute", p=2)
         neigh.fit(x_knn, y_knn)
 
-        video_new_new_reshaped = video_new.reshape((1, self.input_size))
-        video_new_scaled = video_scaler.transform(video_new_new_reshaped)
+        video_new_nparray = video_new.values  #video_new.reshape((1, self.input_size))
+        video_new_scaled = video_scaler.transform(video_new_nparray)
         ann_prediction = self.model.predict(video_new_scaled)
 
         knn_predict = neigh.predict(ann_prediction)
-        predicted_audio = metadata_df.loc[knn_predict, "Audio file path"].values
+        #predicted_audio = metadata_df.loc[knn_predict, "Audio file path"].values
 
-        print("predict:", metadata_df.loc[knn_predict, "Url"].values)
+        #print("predict:", metadata_df.loc[knn_predict, "Url"].values)
 
-        return predicted_audio[0]
+        return knn_predict
 
 
 

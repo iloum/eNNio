@@ -17,6 +17,11 @@ class DataPreprocessor:
         pass
 
 
+def remove_beat_conf_column(audio_ftrs_df):
+    audio_ftrs_proc = audio_ftrs_df.drop(['beat_conf'], axis=1)  # there are NaN in this column
+    return audio_ftrs_proc
+
+
 def read_data_from_pkl(video_path, audio_path, medatada_path):
     video_ftrs = pickle.load(open(video_path, "rb"))
     audio_ftrs = pickle.load(open(audio_path, "rb"))
