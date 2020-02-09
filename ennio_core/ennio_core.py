@@ -90,9 +90,6 @@ class EnnIOCore:
             print("Please download them again if needed")
         print("Done")
 
-
-
-
     def on_exit(self):
         self._db_manager.cleanup()
 
@@ -121,7 +118,7 @@ class EnnIOCore:
 
         self._models.append(ann_model)
 
-    def use_model(self, url, start_time):  #input_file):
+    def use_model(self, url, start_time):  # input_file):
         """
         Method to use the existing model in order to predict a
         suitable music score. It assumes that the construct_model above has been called before
@@ -132,21 +129,25 @@ class EnnIOCore:
 
         self.construct_model()
 
-        new_vid_ftrs = self.get_video_features_for_prediction(url, start_time, start_time+20)
+        new_vid_ftrs = self.get_video_features_for_prediction(url, start_time, start_time + 20)
 
         for model in self._models:
             self._predict_results[model.get_name()] = model.predict(new_vid_ftrs)
 
         print(self._predict_results["ANN"])
 
-    def download_video_from_url(self, url, start_time_str):
+    def download_video_from_url(self, url, start_time_str, mode="training"):
         """
         Method to download a video file from a youtube URL
+        :param mode: default value "training" so as not to interfere with already functionality
         :param url: A youtube video URL
         :param start_time_str: Clip start time
         :return: Downloaded file name
         """
-        clips = self._db_manager.get_clips_by_url(url)
+        if mode == "evaluation":
+            clips = self._db_manager.get_evaluation_clips_by_url(url)
+        else:
+            clips = self._db_manager.get_clips_by_url(url)
         if clips:
             print("URL already in DB")
             return
@@ -155,8 +156,13 @@ class EnnIOCore:
         else:
             start_time = 0
         try:
-            return self._download_video_from_entry(url, start_time,
-                                                   start_time+20)
+            if mode == "evaluation":
+                path = self._download_evaluation_video_from_entry(url, start_time,
+                                                                  start_time + 20)
+            else:
+                path = self._download_video_from_entry(url, start_time,
+                                                       start_time + 20)
+            return path
         except EnnIOException:
             return
 
@@ -198,6 +204,40 @@ class EnnIOCore:
                 start_time += 20
 
         return downloaded_videos, failed_videos
+
+    def _download_evaluation_video_from_entry(self, url, start_time, end_time, comment=""):
+        available_cpus = multiprocessing.cpu_count()
+        if available_cpus > 1:
+            available_cpus -= 1
+
+        temp = self._data_aquisitor.download_from_url(url,
+                                                      start_time=time.strftime("%M:%S", time.gmtime(start_time)),
+                                                      end_time=time.strftime("%M:%S", time.gmtime(end_time)),
+                                                      threads=available_cpus)
+        if not temp:
+            raise EnnIOException
+        metadata = temp[-1]
+        video_stream_name = os.path.basename(metadata['filenames'][
+                                                 'parsed_video'][-1])
+        # audio_stream_name = os.path.basename(metadata['filenames'][
+        #                                         'parsed_audio'][-1])
+        video_file_path = os.path.join(self._video_stream_dir,
+                                       video_stream_name)
+        # audio_file_path = os.path.join(self._audio_stream_dir,
+        #                               audio_stream_name)
+        video_stream_id = self._get_id(video_file_path)
+        # audio_stream_id = self._get_id(audio_file_path)
+        # if not self._db_manager.audio_exists(audio_stream_id):
+        #    self._db_manager.add_audio(audio_id=audio_stream_id,
+        #                               audio_path=audio_file_path)
+        if not self._db_manager.evaluation_video_exists(video_stream_id):
+            self._db_manager.add_evaluation_clip(clip_id=video_stream_id,
+                                                 url=url,
+                                                 start_time=start_time,
+                                                 end_time=end_time,
+                                                 clip_path=video_file_path,
+                                                 clip_title=video_stream_name)
+        return video_file_path
 
     def _download_video_from_entry(self, url, start_time, end_time, comment="", mismatch_url="", mismatch_title=""):
         available_cpus = multiprocessing.cpu_count()
@@ -258,9 +298,41 @@ class EnnIOCore:
     def _get_audio_extractor_config(self):
         config = self._config_manager.get_all_fields(label='AUDIO')
         return {"mid_window": float(config["mid-term-window"]),
-               "mid_step": float(config["mid-term-step"]),
-               "short_window": float(config["short-term-window"]),
-               "short_step": float(config["short-term-step"])}
+                "mid_step": float(config["mid-term-step"]),
+                "short_window": float(config["short-term-window"]),
+                "short_step": float(config["short-term-step"])}
+
+    def extract_video_features_for_evaluation(self):
+        """
+        Method to extract video features and store in Evaluation table
+        :return: extracted video features
+        """
+        video_features_extracted = []
+        video_extractor_kw_args = self._get_video_extractor_config()
+
+        for clip in self._db_manager.get_all_evaluation_clips():
+            if not os.path.isfile(clip.clip_path):
+                continue
+            video_features_exist_in_db = clip.video_features != ""
+
+            if video_features_exist_in_db:
+                continue
+
+            if not video_features_exist_in_db:
+                print("Extracting video features from file: {}".format(os.path.basename(clip.clip_path)))
+                video_features, self._video_feature_names = \
+                    self._video_feature_extractor.extract_video_features(
+                        clip.clip_path, **video_extractor_kw_args)
+                clip.video_features = video_features.tostring()
+                video_features_extracted.append(clip.clip_path)
+                print("Done")
+
+            self._db_manager.save()
+
+        if video_features_extracted:
+            self._db_manager.update_video_feature_names(self._video_feature_names)
+
+        return video_features_extracted
 
     def extract_features(self):
         """
@@ -308,7 +380,6 @@ class EnnIOCore:
         self._db_manager.save()
 
         return video_features_extracted, audio_features_extracted
-
 
     def _read_url_file(self):
         with open(self._url_list_file_location, encoding='utf-8-sig') as csv_file:
@@ -377,11 +448,10 @@ class EnnIOCore:
         print("Saved to {file_name}".format(file_name=audio_features_file))
 
         metadata_file = "metadata_df.pkl"
-        metadata_df.to_pickle(os.path.join(self._data_dir,metadata_file))
+        metadata_df.to_pickle(os.path.join(self._data_dir, metadata_file))
         print("Saved to {file_name}".format(file_name=metadata_file))
 
         return video_df, audio_df, metadata_df
-
 
     def get_video_features_for_prediction(self, url, start_time, end_time):
         '''
@@ -409,14 +479,14 @@ class EnnIOCore:
         video_file_path = os.path.join(self._video_stream_dir_live,
                                        video_stream_name)
 
-
         video_extractor_kw_args = self._get_video_extractor_config()
-        video_features, video_feature_names = self._video_feature_extractor.extract_video_features(video_file_path, **video_extractor_kw_args)
+        video_features, video_feature_names = self._video_feature_extractor.extract_video_features(video_file_path,
+                                                                                                   **video_extractor_kw_args)
 
         size = video_features.shape[0]
         video_features_reshaped = video_features.reshape((1, size))
-        #print(size)
-        #print(type(video_features_reshaped))
+        # print(size)
+        # print(type(video_features_reshaped))
 
         video_df = pd.DataFrame(video_features_reshaped, columns=video_feature_names)
 
