@@ -32,7 +32,7 @@ mlCORE.set_video_dataframe(video_df)
 mlCORE.set_metadata_dataframe(meta_df)
 
 annml = mlCORE.create_model("ANN", model_paths)
-annml.train_model()
+annml._train_model()
 annml.save_ml_core()
 vindex_lst = list(video_df.index.values)
 vindex = random.choice(vindex_lst)

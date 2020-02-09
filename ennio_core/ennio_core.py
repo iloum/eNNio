@@ -31,7 +31,6 @@ class EnnIOCore:
         self._video_feature_names = None
         self._audio_feature_names = None
         self._model_dir = None  # added for models by IL 8/2
-        self._models = list()
         self._predict_results = dict()
         self._video_live_dir = None
         self._video_stream_dir_live = None
@@ -90,13 +89,10 @@ class EnnIOCore:
             print("Please download them again if needed")
         print("Done")
 
-
-
-
     def on_exit(self):
         self._db_manager.cleanup()
 
-    def construct_model(self):
+    def construct_models(self):
         """
         Method to create and train an ML model. Instantiates MLCore and creates various models.
         If the models are not trained, then they are trained and saved.
@@ -110,18 +106,9 @@ class EnnIOCore:
         self._ml_core.set_audio_dataframe(aud_df)
         self._ml_core.set_metadata_dataframe(met_df)
 
-        # when more models are available, we can simple define the in the config file (their names) and a
-        # loop in this point will create them.
-        ann_model, ann_trained = self._ml_core.create_model("ANN", self._model_dir)
-        # matching_model = self._ml_core.create_model("Matching", self.model_dir)
-        # more models to come
-        if not ann_trained:
-            ann_model.train_model()
-            ann_model.save_ml_core()
+        self._ml_core.create_models(self._model_dir)
 
-        self._models.append(ann_model)
-
-    def use_model(self, url, start_time):  #input_file):
+    def use_models(self, url, start_time):  #input_file):
         """
         Method to use the existing model in order to predict a
         suitable music score. It assumes that the construct_model above has been called before
@@ -130,14 +117,21 @@ class EnnIOCore:
         """
         # self.extract_features(input_file)
 
-        self.construct_model()
+        self.construct_models()
 
         new_vid_ftrs = self.get_video_features_for_prediction(url, start_time, start_time+20)
 
-        for model in self._models:
-            self._predict_results[model.get_name()] = model.predict(new_vid_ftrs)
+        predictions = self._ml_core.predict(new_vid_ftrs)
 
-        print(self._predict_results["ANN"])
+        for index, clip_id in predictions.items():
+            clip =  self._db_manager.get_clip_by_id(clip_id)[-1]
+            audio = self._db_manager.get_audio_by_id(clip.audio_from_clip)
+            if not audio:
+                print("Audio '{}' predicted by model {} does not exist".format(audio_id, index))
+                continue
+            print("{index}. {audio_id} {audio_path}".format(index=index,
+                                                            audio_id=clip.audio_from_clip,
+                                                            audio_path=audio.audio_path))
 
     def download_video_from_url(self, url, start_time_str):
         """

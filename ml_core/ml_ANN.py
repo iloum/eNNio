@@ -33,16 +33,6 @@ class ANN(MLModel):
         super().__init__(name)
         pass
 
-
-
-
-    def get_name(self):
-        '''
-        Method to return the name of the model
-        :return: the name of the model
-        '''
-        return self.name
-
     def train_ml_model(self, video_df, audio_df, m_df):
         '''
         method to train the model
@@ -113,7 +103,7 @@ class ANN(MLModel):
 
         #print("predict:", metadata_df.loc[knn_predict, "Url"].values)
 
-        return knn_predict
+        return knn_predict.tolist()[-1]
 
 
 
