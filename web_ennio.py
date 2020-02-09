@@ -82,10 +82,6 @@ class WebEnnio(object):
         # Join Video and suggested audio
         paths = self.ennio_core.merge_results(video_name, results_dict)
 
-        # Call predict for all models
-
-        # Join Video and suggested audio
-
         return paths
 
     def update_winner(self, video_id, winner_model):
@@ -128,6 +124,7 @@ class WebEnnio(object):
         if file_path:
             print('Downloaded file')
             print(file_path)
+            return file_path
         else:
             print('Failed to download')
             print(url, start_time)
