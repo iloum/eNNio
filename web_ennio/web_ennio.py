@@ -17,7 +17,6 @@ class WebEnnio(object):
     """
     Class that manages ennIO's basic pipelines as commanded by the web controller
     """
-
     def __init__(self):
         super(WebEnnio, self).__init__()
         self.ennio_core = EnnIOCore()
