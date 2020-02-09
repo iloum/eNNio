@@ -123,10 +123,14 @@ class EnnIOCore:
 
         predictions = self._ml_core.predict(new_vid_ftrs)
 
-        for index, audio_id in predictions.items():
-            audio = self._db_manager.get_audio_by_id(audio_id)
+        for index, clip_id in predictions.items():
+            clip =  self._db_manager.get_clip_by_id(clip_id)[-1]
+            audio = self._db_manager.get_audio_by_id(clip.audio_from_clip)
+            if not audio:
+                print("Audio '{}' predicted by model {} does not exist".format(audio_id, index))
+                continue
             print("{index}. {audio_id} {audio_path}".format(index=index,
-                                                            audio_id=audio_id,
+                                                            audio_id=clip.audio_from_clip,
                                                             audio_path=audio.audio_path))
 
     def download_video_from_url(self, url, start_time_str):

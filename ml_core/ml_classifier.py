@@ -22,7 +22,7 @@ class Classifier(MLModel):
     @staticmethod
     def _create_not_matching_entries(num_of_entries, metadata):
         mappings = {}
-        videos = random.sample(metadata.index, num_of_entries)
+        videos = random.sample(metadata.index.tolist(), num_of_entries)
         for video in videos:
             candidates = metadata[metadata["Url"] == metadata.at[video, "Mismatch URL"]]
             mappings[video] = random.choice(candidates.index)
@@ -51,7 +51,8 @@ class Classifier(MLModel):
         self.model = SVC(C=0.001, gamma=1, kernel='poly', probability=True, random_state=2020)
 
         norm_video_df, self._video_normalizer = dp.normalize_df(video_df)
-        norm_audio_df, self._audio_normalizer = dp.normalize_df(audio_df)
+        proc_audio_df = dp.remove_beat_conf_column(audio_df)  # remove columns with None
+        norm_audio_df, self._audio_normalizer = dp.normalize_df(proc_audio_df)
 
         trans_video_df, self._video_reducer = dp.reduce_dimensions_svd(norm_video_df,
                                                                        round(sqrt(norm_video_df.shape[0])))
@@ -84,14 +85,14 @@ class Classifier(MLModel):
         :return: the predited value
         """
 
-        norm_video_new = self._video_normalizer.transform(video_new)
+        norm_video_new = self._video_normalizer.transform(video_new.values)
 
-        trans_video_new, _ = self._video_reducer.transform(norm_video_new)
+        trans_video_new = self._video_reducer.transform(norm_video_new)
 
         suggestions = []
 
         for audio in self._trans_audio_df.iterrows():
-            x = np.hstack((trans_video_new.values,
+            x = np.hstack((trans_video_new,
                            audio[1].values.reshape(1, len(audio[1]))))
 
             probs = self.model.predict_proba(x).ravel().tolist()

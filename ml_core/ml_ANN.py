@@ -103,7 +103,7 @@ class ANN(MLModel):
 
         #print("predict:", metadata_df.loc[knn_predict, "Url"].values)
 
-        return knn_predict
+        return knn_predict.tolist()[-1]
 
 
 

@@ -35,7 +35,7 @@ class UserInterface(Cmd):
         """
         Create and train a model
         """
-        self.ennio_core.construct_model()
+        self.ennio_core.construct_models()
 
     def do_use_model(self, args):
         """
@@ -54,7 +54,7 @@ class UserInterface(Cmd):
             print("Not valid url")
             return
 
-        self.ennio_core.use_model(url, start_time=start_time) #input_file=args)
+        self.ennio_core.use_models(url, start_time=start_time) #input_file=args)
 
     def do_download_video_from_url(self, args):
         """
