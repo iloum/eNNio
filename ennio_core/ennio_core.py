@@ -26,6 +26,7 @@ class EnnIOCore:
         self._video_download_dir = None
         self._data_dir = None
         self._url_list_file_location = None
+        self._eval_video_stream_dir = None
         self._video_stream_dir = None
         self._audio_stream_dir = None
         self._video_feature_names = None
