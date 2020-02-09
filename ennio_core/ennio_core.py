@@ -53,7 +53,6 @@ class EnnIOCore:
         self._db_manager.setup(os.path.join(self._data_dir, self._config_manager.get_field('db-file-name')))
         self._video_feature_names = self._db_manager.get_video_feature_names()
         self._audio_feature_names = self._db_manager.get_audio_feature_names()
-        self._model_dir = os.path.join(self._data_dir, "models")  # added for models by IL 8/2
         self._check_db_consistency()
 
     def _create_directories(self):
