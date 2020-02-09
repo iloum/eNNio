@@ -17,6 +17,7 @@ class WebEnnio(object):
     """
     Class that manages ennIO's basic pipelines as commanded by the web controller
     """
+
     def __init__(self):
         super(WebEnnio, self).__init__()
         self.ennio_core = EnnIOCore()
@@ -66,6 +67,10 @@ class WebEnnio(object):
 
         # Extract video features
         video_extracted = self.ennio_core.extract_video_features_for_evaluation(video_name)
+
+        # Call predict for all models
+
+        # Join Video and suggested audio
 
         # Call predict for all models
 
