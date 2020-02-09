@@ -126,5 +126,3 @@ MEDIA_ROOT = os.path.join(BASE_DIR, r'data/downloads/parsed/video/')
 
 MEDIA_URL = '/media/'
 
-if __name__ == "__main__":
-    print(MEDIA_ROOT)
