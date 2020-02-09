@@ -33,16 +33,6 @@ class ANN(MLModel):
         super().__init__(name)
         pass
 
-
-
-
-    def get_name(self):
-        '''
-        Method to return the name of the model
-        :return: the name of the model
-        '''
-        return self.name
-
     def train_ml_model(self, video_df, audio_df, m_df):
         '''
         method to train the model

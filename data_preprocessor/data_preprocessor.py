@@ -3,6 +3,7 @@ from sklearn.decomposition import PCA
 import pandas as pd
 import pickle
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.decomposition import TruncatedSVD
 
 class DataPreprocessor:
     def __init__(self):
@@ -55,3 +56,22 @@ def reduce_dimensions(data, newdimension):
     pca.fit(scaleddata)
     newdata = pca.transform(scaleddata)
     return newdata, scaler, pca
+
+def normalize_df(df):
+    scaler = StandardScaler()
+    scaled_df = pd.DataFrame(scaler.fit_transform(df.values), columns=df.columns, index=df.index)
+    return scaled_df, scaler
+
+def reduce_dimensions_svd(in_df:pd.DataFrame, new_dimension:int):
+    """
+    Method to reduce the features in a dataframe
+    using Multidimensional scaling
+    :param in_df: Input dataframe
+    :param new_dimension: Number of output features
+    :return: Reduced dataframe, reducer
+    """
+    reducer = TruncatedSVD(n_components=new_dimension, random_state=2020)
+    out_df = pd.DataFrame(reducer.fit_transform(in_df.values),
+                          index=in_df.index)
+
+    return out_df, reducer

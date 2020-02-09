@@ -1,5 +1,6 @@
 import pickle
 from ml_core.ml_ANN import ANN
+from ml_core.ml_classifier import Classifier
 from utilities import file_management as fm
 import os
 
@@ -9,14 +10,13 @@ class MLCore:
         Constructor
         :param mdl: the name of the model (string)
         '''
-        self.name = None
-        self.modelclass = None
+        self.available_models = ("ANN", "Classifier")
+        self.models = {name : None for name in self.available_models}
+        self.is_model_trained = {name : False for name in self.available_models}
         self.video_df = None
         self.audio_df = None
         self.meta_df = None
         self.model_path = None
-
-        pass
 
     def set_audio_dataframe(self, a_df):
         self.audio_df = a_df
@@ -27,34 +27,43 @@ class MLCore:
     def set_metadata_dataframe(self, m_df):
         self.meta_df = m_df
 
-    def get_name(self):
-        return self.name
-
-    def create_model(self, model_name, model_path):
-        self.name = model_name
+    def create_models(self, model_path):
         self.model_path = model_path
-        trained = False  # if the model is trained and loaded from a pickle do not train it again
-        stored_models = fm.getfiledictionary(path=model_path)
+        for model_name in self.available_models:
+            self.create_model(model_name)
+            self._train_model(model_name)
+
+    def create_model(self, model_name):
+        stored_models = fm.getfiledictionary(path=self.model_path)
+
+        # if model exist, load it
+        if model_name in stored_models.keys():
+            self.models[model_name] = pickle.load(open(stored_models[model_name], "rb"))
+            self.is_model_trained[model_name] = True
+            return
+
         if model_name == "ANN":
-            if model_name in stored_models.keys():  # if model exist, load it
-                self.modelclass = pickle.load(open(stored_models[model_name], "rb"))
-                trained = True
-            else:  # else create it
                 _, insize = self.video_df.shape
                 _, outsize = self.audio_df.shape
-                self.modelclass = ANN("ANN", batch_size=64, epochs=100, input_size=insize, output_size=outsize-1)  #-1 because I will remove 1 column
-                trained = False
-        return self, trained
+                self.models[model_name] = ANN(model_name, batch_size=64, epochs=100,
+                                              input_size=insize, output_size=outsize-1)
+        elif model_name == "Classifier":
+                self.models[model_name] = Classifier(model_name)
 
-    def train_model(self):
+        self.is_model_trained[model_name] = False
+
+    def _train_model(self, model_name):
         """
         Method to train core machine learning model
-        :param train_data: Dataframe containing training data
+        :param model_name: Model to train
         :return:
         """
+        if self.is_model_trained[model_name]:
+            return
 
-        self.modelclass.train_ml_model(self.video_df, self.audio_df, self.meta_df)
-        return True
+        self.models[model_name].train_ml_model(self.video_df, self.audio_df, self.meta_df)
+        self._save_model(model_name)
+        self.is_model_trained[model_name] = True
 
     def evaluate_model(self):
         """
@@ -62,26 +71,28 @@ class MLCore:
         :param test_data: Dataframe containing test data
         :return: Metrics
         """
-        loss = self.modelclass.evaluate_ml_model(self.video_df, self.audio_df, self.meta_df)
+        loss = self.models["ANN"].evaluate_ml_model(self.video_df, self.audio_df, self.meta_df)
         return loss
 
     def predict(self, new_video_ftrs):
         """
         Method to suggest a music score for a video
-        :param video_features: Features of the video
-        :return: Music score id
+        :param new_video_ftrs: Features of the video
+        :return: Dictionary containing predictions of the models
         """
-        y_predict = self.modelclass.predict_ml_model(self.video_df, self.audio_df, self.meta_df, new_video_ftrs)
-        return y_predict
+        predictions = {}
+        for index, model_name in enumerate(self.available_models):
+            predictions[index] = self.models[model_name].predict_ml_model(self.video_df,
+                                                                          self.audio_df,
+                                                                          self.meta_df,
+                                                                          new_video_ftrs)
+        return predictions
 
-    def save_ml_core(self):
+    def _save_model(self, model_name):
         """
         Method to save trained model
-        :param filename: Name of the file to save model to
+        :param model_name: Name of the file to save model to
         :return:
         """
-
-        pickle.dump(self.modelclass, open(os.path.join(self.model_path, self.name), "wb"))
-        return True
-
+        pickle.dump(self.models[model_name], open(os.path.join(self.model_path, model_name), "wb"))
 
