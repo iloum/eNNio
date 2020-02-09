@@ -120,12 +120,13 @@ class WebEnnio(object):
         if file_path:
             print('Downloaded file')
             print(file_path)
-            return file_path
         else:
             print('Failed to download')
             print(url, start_time)
+        return file_path
+
 
 # for my testing
-# if __name__=='__main__':
-#    we = WebEnnio()
-#    print(we.evaluation_mode("","1a"))
+if __name__ == '__main__':
+    we = WebEnnio()
+    print(we.evaluation_mode("https://www.youtube.com/watch?v=a-T4ZPP3k8U","02:15"))
