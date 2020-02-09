@@ -26,8 +26,6 @@ class EnnIOCore:
         self._video_download_dir = None
         self._data_dir = None
         self._url_list_file_location = None
-        self._eval_merged_dir = None
-        self._eval_video_stream_dir = None
         self._video_stream_dir = None
         self._audio_stream_dir = None
         self._video_feature_names = None
@@ -37,15 +35,19 @@ class EnnIOCore:
         self._predict_results = dict()
         self._video_live_dir = None
         self._video_stream_dir_live = None
+        self._evaluation_dir = None
+        self._eval_merged_dir = None
+        self._eval_video_stream_dir = None
 
     def setup(self):
         self._config_manager.read_config()
         self._data_dir = self._config_manager.get_field('data-folder')
         self._video_download_dir = os.path.join(self._data_dir, "downloads")
         parsed_dir = os.path.join(self._video_download_dir, 'parsed')
-        evaluation_dir = os.path.join(self._video_download_dir, 'evaluation')
-        self._eval_video_stream_dir = os.path.join(evaluation_dir, 'video')
-        self._eval_merged_dir = os.path.join(evaluation_dir, 'merged')
+        self._evaluation_dir = os.path.join(self._data_dir, 'evaluation')
+        eval_parsed_dir = os.path.join(self._evaluation_dir, 'parsed')
+        self._eval_video_stream_dir = os.path.join(eval_parsed_dir, 'video')
+        self._eval_merged_dir = os.path.join(self._evaluation_dir, 'merged')
         self._video_stream_dir = os.path.join(parsed_dir, 'video')
         self._audio_stream_dir = os.path.join(parsed_dir, 'audio')
         self._url_list_file_location = self._config_manager.get_field('urls-list-file')
@@ -63,7 +65,8 @@ class EnnIOCore:
     def _create_directories(self):
         for directory in [self._audio_stream_dir, self._video_download_dir,
                           self._video_stream_dir, self._model_dir,
-                          self._video_live_dir, self._video_stream_dir_live]:
+                          self._video_live_dir, self._video_stream_dir_live,
+                          self._eval_video_stream_dir, self._eval_merged_dir]:
             os.makedirs(directory, exist_ok=True)
 
     def _check_db_consistency(self):
@@ -148,6 +151,7 @@ class EnnIOCore:
         :return: the dictionary with the results of all models {model_name: audio_id}
         """
 
+        self.construct_model()
         # load the models
         ann_model, ann_trained = self._ml_core.create_model("ANN", self._model_dir)
         if not ann_trained:
@@ -190,7 +194,10 @@ class EnnIOCore:
             clips = self._db_manager.get_evaluation_clips_by_url(url)
         else:
             clips = self._db_manager.get_clips_by_url(url)
-        if clips:
+        if clips and mode == "evaluation":
+            print("URL already in DB")
+            return clips[0].clip_path
+        elif clips:
             print("URL already in DB")
             return
         if start_time_str:
@@ -259,10 +266,12 @@ class EnnIOCore:
         if available_cpus > 1:
             available_cpus -= 1
 
+        self._data_aquisitor.set_download_location(self._evaluation_dir)
         temp = self._data_aquisitor.download_from_url(url,
                                                       start_time=time.strftime("%M:%S", time.gmtime(start_time)),
                                                       end_time=time.strftime("%M:%S", time.gmtime(end_time)),
                                                       threads=available_cpus)
+        self._data_aquisitor.set_download_location(self._video_download_dir)
         if not temp:
             raise EnnIOException
         metadata = temp[-1]
@@ -364,6 +373,8 @@ class EnnIOCore:
                 video_features_exist_in_db = clip.video_features != ""
 
                 if video_features_exist_in_db:
+                    #video_features = np.fromstring(clip.video_features)
+                    #self._video_feature_names = self._db_manager.get_video_feature_names()
                     continue
 
                 if not video_features_exist_in_db:
@@ -375,13 +386,17 @@ class EnnIOCore:
                     print("Done")
 
                 self._db_manager.save()
+                print("saved")
 
-            if video_features:
-                self._db_manager.update_video_feature_names(self._video_feature_names)
+                #if video_features_exist_in_db:
+                    #self._db_manager.update_video_feature_names(self._video_feature_names)
+                    #self._video_feature_names = self._db_manager.get_video_feature_names()
 
-            size = video_features.shape[0]
-            video_features_reshaped = video_features.reshape((1, size))
-            video_df = pd.DataFrame(video_features_reshaped, columns=self._video_feature_names)
+                size = video_features.shape[0]
+                video_features_reshaped = video_features.reshape((1, size))
+                #print(size)
+                #print(self._video_feature_names)
+                video_df = pd.DataFrame(video_features_reshaped, columns=self._video_feature_names)
 
         return video_features, video_df
 
