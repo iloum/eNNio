@@ -167,31 +167,39 @@ class EnnIOCore:
         """
         downloaded_videos = list()
         failed_videos = set()
-        for row in self._read_url_file():
+        for index, row in self._read_url_file():
             title = row['Film']
             url = row['URL']
             start_time_str = row['Start']
             end_time_str = row['End']
             comment = row['Comment']
+            mismatch_url = row['Mismatch URL']
+            mismatch_title = row['Mismatch Title']
             start_time = self._time_string_to_seconds(start_time_str)
             end_time = self._time_string_to_seconds(end_time_str)
 
             while start_time < end_time:
                 if not self._clip_exists(url, start_time, start_time + 20):
                     try:
-                        file_path = self._download_video_from_entry(url, start_time, start_time + 20, comment=comment)
+                        file_path = self._download_video_from_entry(url, start_time, start_time + 20,
+                                                                    comment=comment,
+                                                                    mismatch_title=mismatch_title,
+                                                                    mismatch_url=mismatch_url)
                         downloaded_videos.append(file_path)
                     except EnnIOException:
-                        failed_videos.add("{title}, {url}, {start}, {end}, {comment}".format(title=title,
-                                                                                             url=url,
-                                                                                             start=start_time_str,
-                                                                                             end=end_time_str,
-                                                                                             comment=comment))
+                        failed_videos.add("{index}. {title}, {url}, {start}, "
+                                          "{end}, {comment}".format(index=index,
+                                                                    title=title,
+                                                                    url=url,
+                                                                    start=start_time_str,
+                                                                    end=end_time_str,
+                                                                    comment=comment))
+                        break
                 start_time += 20
 
         return downloaded_videos, failed_videos
 
-    def _download_video_from_entry(self, url, start_time, end_time, comment=""):
+    def _download_video_from_entry(self, url, start_time, end_time, comment="", mismatch_url="", mismatch_title=""):
         available_cpus = multiprocessing.cpu_count()
         if available_cpus > 1:
             available_cpus -= 1
@@ -224,7 +232,9 @@ class EnnIOCore:
                                       clip_path=video_file_path,
                                       clip_title=video_stream_name,
                                       clip_description=comment,
-                                      audio_from_clip=audio_stream_id)
+                                      audio_from_clip=audio_stream_id,
+                                      mismatch_url=mismatch_url,
+                                      mismatch_title=mismatch_title)
         return video_file_path
 
     def get_status(self):
@@ -302,8 +312,10 @@ class EnnIOCore:
 
     def _read_url_file(self):
         with open(self._url_list_file_location, encoding='utf-8-sig') as csv_file:
+            index = 1
             for row in csv.DictReader(csv_file):
-                yield row
+                index += 1
+                yield index, row
 
     @staticmethod
     def _get_id(file_path):
@@ -333,7 +345,7 @@ class EnnIOCore:
         video_features = dict()
         audio_features = dict()
         metadata = dict()
-        metadata_columns = ['Title', 'Url', 'Video file path', 'Audio file path']
+        metadata_columns = ['Title', 'Url', 'Video file path', 'Audio file path', 'Mismatch Title', 'Mismatch URL']
         for clip in self._db_manager.get_all_clips():
             audio = self._db_manager.get_audio_by_id(clip.audio_from_clip)
             video_features_exist_in_db = clip.video_features != ""
@@ -342,7 +354,8 @@ class EnnIOCore:
             if video_features_exist_in_db and audio_feature_exist_in_db:
                 video_features[clip.clip_id] = np.frombuffer(clip.video_features)
                 audio_features[clip.clip_id] = np.frombuffer(audio.audio_features)
-                metadata[clip.clip_id] = [clip.clip_title, clip.url, clip.clip_path, audio.audio_path]
+                metadata[clip.clip_id] = [clip.clip_title, clip.url, clip.clip_path, audio.audio_path,
+                                          clip.mismatch_title, clip.mismatch_url]
 
         video_df = pd.DataFrame.from_dict(video_features, orient='index',
                                           columns=self._video_feature_names)

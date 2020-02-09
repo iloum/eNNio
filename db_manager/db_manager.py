@@ -41,7 +41,8 @@ class DbManager(object):
     # CLIPS
     def add_clip(self, clip_id="", url="", start_time=0, end_time=0,
                  clip_title="", clip_description="", clip_path="",
-                 video_features=None, audio_from_clip=""):
+                 video_features=None, audio_from_clip="", mismatch_url = "",
+                 mismatch_title = ""):
         new_clip = Clip(clip_id=clip_id, url=url,
                         start_time=start_time, end_time=end_time,
                         clip_title=clip_title,
@@ -49,7 +50,9 @@ class DbManager(object):
                         clip_path=clip_path,
                         video_features=video_features.tostring() if
                         video_features else "",
-                        audio_from_clip=audio_from_clip)
+                        audio_from_clip=audio_from_clip,
+                        mismatch_url=mismatch_url,
+                        mismatch_title=mismatch_title)
         self.session.add(new_clip)
         self.session.flush()
 

@@ -88,7 +88,7 @@ def main(args):
             
             persisted_item = persisted_meta[parsed_item['link']]
            
-            if compareflat_dict(parsed_item['specs'],persisted_item['specs']):
+            if compareflat_dict(parsed_item['specs'],persisted_item['specs']) and persisted_item['filenames']:
                 skip_download=True
                 
                 if compare_lists(parsed_item["timestamps"],persisted_item['timestamps']):
