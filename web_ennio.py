@@ -124,7 +124,6 @@ class WebEnnio(object):
         if file_path:
             print('Downloaded file')
             print(file_path)
-            return file_path
         else:
             print('Failed to download')
             print(url, start_time)
