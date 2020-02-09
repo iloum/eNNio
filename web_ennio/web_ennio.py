@@ -1,8 +1,25 @@
 import ennio_exceptions as exc
+import sys
+import re
+from time import time
+from cmd import Cmd
+from ennio_core.ennio_core import EnnIOCore
+
+VALID_URL = re.compile(r'^(?:http|ftp)s?://' # http:// or https://
+                       r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|' #domain...
+                       r'localhost|' #localhost...
+                       r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})' # ...or ip
+                       r'(?::\d+)?' # optional port
+                       r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+
 class WebEnnio(object):
     """
     Class that manages ennIO's basic pipelines as commanded by the web controller
     """
+    def __init__(self):
+        super(WebEnnio, self).__init__()
+        self.ennio_core = EnnIOCore()
+        self.ennio_core.setup()
 
     def training_mode(self):
         """
@@ -20,6 +37,9 @@ class WebEnnio(object):
         paths = []
         if any(i.isalpha() for i in start_time_str):
             raise exc.EnnIOException("start time must be just digits!")
+        self.do_download_video_from_url(url,start_time_str)
+        video_extracted = self.ennio_core.extract_video_features_for_evaluation()
+
         return paths
 
     def update_winner(self, winner_id, winner_model):
@@ -44,6 +64,27 @@ class WebEnnio(object):
         if any(i.isalpha() for i in start_time_str):
             raise exc.EnnIOException("start time must be just digits!")
         return path
+
+    def do_download_video_from_url(self, url, start_time):
+        """
+        Download Youtube video from url
+        Usage: download_video_from_url <URL>
+        """
+        try:
+            if ":" not in start_time:
+                print("Not valid start-time format - Valid format MM:SS")
+                return
+        except IndexError:
+            pass
+        print(start_time)
+        file_path = self.ennio_core.download_video_from_url(url=url,
+                                                            start_time_str=start_time, mode="evaluation")
+        if file_path:
+            print('Downloaded file')
+            print(file_path)
+        else:
+            print('Failed to download')
+            print(url, start_time)
 
 # for my testing
 #if __name__=='__main__':
