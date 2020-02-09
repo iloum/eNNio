@@ -305,7 +305,7 @@ class EnnIOCore:
                 "short_window": float(config["short-term-window"]),
                 "short_step": float(config["short-term-step"])}
 
-    def extract_video_features_for_evaluation(self):
+    def extract_video_features_for_evaluation(self, video_path):
         """
         Method to extract video features and store in Evaluation table
         :return: extracted video features
@@ -314,26 +314,25 @@ class EnnIOCore:
         video_extractor_kw_args = self._get_video_extractor_config()
 
         for clip in self._db_manager.get_all_evaluation_clips():
-            if not os.path.isfile(clip.clip_path):
-                continue
-            video_features_exist_in_db = clip.video_features != ""
+            if clip.clip_path == video_path:
+                video_features_exist_in_db = clip.video_features != ""
 
-            if video_features_exist_in_db:
-                continue
+                if video_features_exist_in_db:
+                    continue
 
-            if not video_features_exist_in_db:
-                print("Extracting video features from file: {}".format(os.path.basename(clip.clip_path)))
-                video_features, self._video_feature_names = \
-                    self._video_feature_extractor.extract_video_features(
-                        clip.clip_path, **video_extractor_kw_args)
-                clip.video_features = video_features.tostring()
-                video_features_extracted.append(clip.clip_path)
-                print("Done")
+                if not video_features_exist_in_db:
+                    print("Extracting video features from file: {}".format(os.path.basename(clip.clip_path)))
+                    video_features, self._video_feature_names = \
+                        self._video_feature_extractor.extract_video_features(
+                            clip.clip_path, **video_extractor_kw_args)
+                    clip.video_features = video_features.tostring()
+                    video_features_extracted.append(clip.clip_path)
+                    print("Done")
 
-            self._db_manager.save()
+                self._db_manager.save()
 
-        if video_features_extracted:
-            self._db_manager.update_video_feature_names(self._video_feature_names)
+            if video_features_extracted:
+                self._db_manager.update_video_feature_names(self._video_feature_names)
 
         return video_features_extracted
 
