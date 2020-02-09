@@ -53,13 +53,8 @@ class EnnIOCore:
         self._db_manager.setup(os.path.join(self._data_dir, self._config_manager.get_field('db-file-name')))
         self._video_feature_names = self._db_manager.get_video_feature_names()
         self._audio_feature_names = self._db_manager.get_audio_feature_names()
-<<<<<<< HEAD
         self._model_dir = os.path.join(self._data_dir, "models")  # added for models by IL 8/2
         self._check_db_consistency()
-=======
-
-
->>>>>>> changes in:
 
     def _create_directories(self):
         for directory in [self._audio_stream_dir, self._video_download_dir,
@@ -144,8 +139,6 @@ class EnnIOCore:
             self._predict_results[model.get_name()] = model.predict(new_vid_ftrs)
 
         print(self._predict_results["ANN"])
-
-
 
     def download_video_from_url(self, url, start_time_str):
         """
