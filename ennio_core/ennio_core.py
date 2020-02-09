@@ -15,7 +15,6 @@ from functools import reduce
 from ml_core.ml_core import MLCore
 
 
-
 class EnnIOCore:
     def __init__(self):
         self._config_manager = ConfigManager()
@@ -27,6 +26,7 @@ class EnnIOCore:
         self._video_download_dir = None
         self._data_dir = None
         self._url_list_file_location = None
+        self._eval_merged_dir = None
         self._eval_video_stream_dir = None
         self._video_stream_dir = None
         self._audio_stream_dir = None
@@ -45,6 +45,7 @@ class EnnIOCore:
         parsed_dir = os.path.join(self._video_download_dir, 'parsed')
         evaluation_dir = os.path.join(self._video_download_dir, 'evaluation')
         self._eval_video_stream_dir = os.path.join(evaluation_dir, 'video')
+        self._eval_merged_dir = os.path.join(evaluation_dir, 'merged')
         self._video_stream_dir = os.path.join(parsed_dir, 'video')
         self._audio_stream_dir = os.path.join(parsed_dir, 'audio')
         self._url_list_file_location = self._config_manager.get_field('urls-list-file')
@@ -121,6 +122,43 @@ class EnnIOCore:
             ann_model.save_ml_core()
 
         self._models.append(ann_model)
+
+    def audio_video_merge(self, audio_path, video_path, export_path):
+        os.system(f"ffmpeg -y -t 60 -i {video_path} -i {audio_path} \
+                        -c:v copy -c:a aac -strict experimental {export_path}")
+
+    def merge_results(self, video_path, results):
+        """
+        uses audio_video_merge from utilities to produce n+1 clips, where n is the number of models
+        :param video_path:
+        :param results:
+        :return: a list of tuples (model, exported_path)
+        """
+        paths = []
+        for result in results:
+            audio_path = self._db_manager.get_audio_by_id(results[result]).audio_path
+            new_name = result + ".mp4"
+            export_path = os.path.join(self._eval_merged_dir, new_name)
+            self.audio_video_merge(audio_path, video_path, export_path)
+            paths.append((result, export_path))
+
+    def predict_audio_from_models(self, video_df):
+        """
+        :param video_df:
+        :return: the dictionary with the results of all models {model_name: audio_id}
+        """
+
+        # load the models
+        ann_model, ann_trained = self._ml_core.create_model("ANN", self._model_dir)
+        if not ann_trained:
+            ann_model.train_model()
+            ann_model.save_ml_core()
+        self._models.append(ann_model)
+
+        for model in self._models:
+            self._predict_results[model.get_name()] = model.predict(video_df)
+
+        return self._predict_results
 
     def use_model(self, url, start_time):  # input_file):
         """
@@ -209,7 +247,14 @@ class EnnIOCore:
 
         return downloaded_videos, failed_videos
 
-    def _download_evaluation_video_from_entry(self, url, start_time, end_time, comment=""):
+    def _download_evaluation_video_from_entry(self, url, start_time, end_time):
+        """
+        Downloads and stores video in Evaluation table
+        :param url:
+        :param start_time:
+        :param end_time:
+        :return: the path of downloaded video. this will be used to extract video features
+        """
         available_cpus = multiprocessing.cpu_count()
         if available_cpus > 1:
             available_cpus -= 1
@@ -242,7 +287,6 @@ class EnnIOCore:
                                                  clip_path=video_file_path,
                                                  clip_title=video_stream_name)
         return video_file_path
-
 
     def _download_video_from_entry(self, url, start_time, end_time, comment="", mismatch_url="", mismatch_title=""):
         available_cpus = multiprocessing.cpu_count()
@@ -312,7 +356,7 @@ class EnnIOCore:
         Method to extract video features and store in Evaluation table
         :return: extracted video features
         """
-        video_features_extracted = []
+        video_features, video_df = None, None
         video_extractor_kw_args = self._get_video_extractor_config()
 
         for clip in self._db_manager.get_all_evaluation_clips():
@@ -328,15 +372,18 @@ class EnnIOCore:
                         self._video_feature_extractor.extract_video_features(
                             clip.clip_path, **video_extractor_kw_args)
                     clip.video_features = video_features.tostring()
-                    video_features_extracted.append(clip.clip_path)
                     print("Done")
 
                 self._db_manager.save()
 
-            if video_features_extracted:
+            if video_features:
                 self._db_manager.update_video_feature_names(self._video_feature_names)
 
-        return video_features_extracted
+            size = video_features.shape[0]
+            video_features_reshaped = video_features.reshape((1, size))
+            video_df = pd.DataFrame(video_features_reshaped, columns=self._video_feature_names)
+
+        return video_features, video_df
 
     def extract_features(self):
         """

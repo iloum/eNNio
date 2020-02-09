@@ -56,7 +56,7 @@ class WebEnnio(object):
         """
         :param url: url for evaluation
         :param start_time_str: start time in string format
-        :return: paths: a list of 4 combined videos in the form of tuples (id, model, path)
+        :return: paths: a list of 4 combined videos in the form of tuples (model, path)
         """
         paths = []
         if any(i.isalpha() for i in start_time_str):
@@ -66,11 +66,13 @@ class WebEnnio(object):
         video_name = self.do_download_video_from_url(url, start_time_str)
 
         # Extract video features
-        video_extracted = self.ennio_core.extract_video_features_for_evaluation(video_name)
+        video_features, video_df = self.ennio_core.extract_video_features_for_evaluation(video_name)
 
         # Call predict for all models
+        results_dict = self.ennio_core.predict_audio_from_models(video_df)
 
         # Join Video and suggested audio
+        paths = self.ennio_core.merge_results(video_name, results_dict)
 
         return paths
 
