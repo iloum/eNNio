@@ -128,12 +128,18 @@ class EnnIOCore:
         :return: a list of tuples (model, exported_path)
         """
         paths = []
+        vid_id = self._db_manager.get_evaluation_clips_by_path(video_path).clip_id
         for result in results:
             audio_path = self._db_manager.get_audio_by_id(results[result]).audio_path
             new_name = result + ".mp4"
             export_path = os.path.join(self._eval_merged_dir, new_name)
             self.audio_video_merge(audio_path, video_path, export_path)
-            paths.append((result, export_path))
+            paths.append((vid_id, result, export_path))
+
+        return paths
+
+    def update_evaluation_vote(self,video_id, winner):
+        self._db_manager.update_voted_model(video_id, winner)
 
     def predict_audio_from_models(self, video_df):
         """

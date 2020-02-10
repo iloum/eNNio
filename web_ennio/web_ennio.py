@@ -1,9 +1,8 @@
 import ennio_exceptions as exc
-import sys
 import re
 from time import time
-from cmd import Cmd
 from ennio_core.ennio_core import EnnIOCore
+
 
 VALID_URL = re.compile(r'^(?:http|ftp)s?://'  # http:// or https://
                        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
@@ -48,7 +47,7 @@ class WebEnnio(object):
         print('Audio features extracted from {} clips'.format(len(audio_extracted)))
 
         # do_create_dataframes
-        self.ennio_core.create_dataframe_files()
+        # self.ennio_core.create_dataframe_files()
 
         return
 
@@ -56,7 +55,7 @@ class WebEnnio(object):
         """
         :param url: url for evaluation
         :param start_time_str: start time in string format
-        :return: paths: a list of 4 combined videos in the form of tuples (model, path)
+        :return: paths: a list of 4 combined videos in the form of tuples (video_id, model, path)
         """
         paths = []
         if any(i.isalpha() for i in start_time_str):
@@ -80,15 +79,15 @@ class WebEnnio(object):
 
         return paths
 
-    def update_winner(self, winner_id, winner_model):
+    def update_winner(self, video_id, winner_model):
         """
-        :param winner_id:
+        :param video_id:
         :param winner_model:
         :return:
         """
         if not isinstance(winner_model, str):
             raise exc.EnnIOException("winner model must be in string format!")
-        path = ""
+        self.ennio_core.update_evaluation_vote(video_id, winner_model)
         return
 
     def live_ennio(self, url, start_time_str):
