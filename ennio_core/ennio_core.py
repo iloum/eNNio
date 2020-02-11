@@ -403,6 +403,9 @@ class EnnIOCore:
 
         video_features, video_feature_names = self._video_feature_extractor.extract_video_features(video_path,
                                                                                                    **video_extractor_kw_args)
+        clip = self._db_manager.get_evaluation_clip_by_path(video_path)
+        clip.video_features = video_features.tostring()
+        self._db_manager.save()
         size = video_features.shape[0]
         video_features_reshaped = video_features.reshape((1, size))
         video_df = pd.DataFrame(video_features_reshaped, columns=video_feature_names)
