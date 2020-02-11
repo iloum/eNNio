@@ -108,7 +108,11 @@ class EnnIOCore:
         """
         # self.download_video_from_url_file()
         # self.extract_features(os.listdir(self._video_download_dir))
+        print("len ", len(self._db_manager.get_all_clips()))
         vid_df, aud_df, met_df = self.create_dataframe_files()
+        print(vid_df.shape)
+        print(aud_df.shape)
+        print(met_df.shape)
 
         self._ml_core.set_video_dataframe(vid_df)
         self._ml_core.set_audio_dataframe(aud_df)
@@ -128,9 +132,15 @@ class EnnIOCore:
         :return: a list of tuples (model, exported_path)
         """
         paths = []
-        vid_id = self._db_manager.get_evaluation_clips_by_path(video_path).clip_id
+        vid_id = self._db_manager.get_evaluation_clip_by_path(video_path).clip_id
         for result in results:
-            audio_path = self._db_manager.get_audio_by_id(results[result]).audio_path
+            print("result ", result)
+            audio_id = np.array2string(results[result])[2:-2]
+            print(audio_id)
+            print(self._db_manager.audio_exists(audio_id))
+            audio = self._db_manager.get_audio_by_id(audio_id)
+            print(audio)
+            audio_path = audio.audio_path
             new_name = result + ".mp4"
             export_path = os.path.join(self._eval_merged_dir, new_name)
             self.audio_video_merge(audio_path, video_path, export_path)
@@ -368,38 +378,14 @@ class EnnIOCore:
         Method to extract video features and store in Evaluation table
         :return: extracted video features
         """
-        video_features, video_df = None, None
+
         video_extractor_kw_args = self._get_video_extractor_config()
 
-        for clip in self._db_manager.get_all_evaluation_clips():
-            if clip.clip_path == video_path:
-                video_features_exist_in_db = clip.video_features != ""
-
-                if video_features_exist_in_db:
-                    #video_features = np.fromstring(clip.video_features)
-                    #self._video_feature_names = self._db_manager.get_video_feature_names()
-                    continue
-
-                if not video_features_exist_in_db:
-                    print("Extracting video features from file: {}".format(os.path.basename(clip.clip_path)))
-                    video_features, self._video_feature_names = \
-                        self._video_feature_extractor.extract_video_features(
-                            clip.clip_path, **video_extractor_kw_args)
-                    clip.video_features = video_features.tostring()
-                    print("Done")
-
-                self._db_manager.save()
-                print("saved")
-
-                #if video_features_exist_in_db:
-                    #self._db_manager.update_video_feature_names(self._video_feature_names)
-                    #self._video_feature_names = self._db_manager.get_video_feature_names()
-
-                size = video_features.shape[0]
-                video_features_reshaped = video_features.reshape((1, size))
-                #print(size)
-                #print(self._video_feature_names)
-                video_df = pd.DataFrame(video_features_reshaped, columns=self._video_feature_names)
+        video_features, video_feature_names = self._video_feature_extractor.extract_video_features(video_path,
+                                                                                                   **video_extractor_kw_args)
+        size = video_features.shape[0]
+        video_features_reshaped = video_features.reshape((1, size))
+        video_df = pd.DataFrame(video_features_reshaped, columns=video_feature_names)
 
         return video_features, video_df
 

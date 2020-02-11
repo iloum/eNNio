@@ -62,7 +62,7 @@ class ConfigManager:
         """
         self._config['GLOBAL'] = {}
         self.set_field(field_name="data-folder",
-                       value="..\data")
+                       value="data")
         self.set_field(field_name="urls-list-file",
                        value="url_list.csv")
         self.set_field(field_name="db-file-name",
