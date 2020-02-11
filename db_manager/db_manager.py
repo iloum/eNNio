@@ -201,6 +201,9 @@ class DbManager(object):
     def get_evaluation_clips_by_path(self, path):
         return self.session.query(UserEvaluation).filter_by(clip_path=path).all()
 
+    def get_evaluation_clip_by_path(self, path):
+        return self.session.query(UserEvaluation).filter_by(clip_path=path).first()
+
     def get_evaluation_clips_by_id(self, id):
         return self.session.query(UserEvaluation).filter_by(clip_id=id).all()
 

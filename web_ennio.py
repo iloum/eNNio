@@ -21,6 +21,8 @@ class WebEnnio(object):
         super(WebEnnio, self).__init__()
         self.ennio_core = EnnIOCore()
         self.ennio_core.setup()
+        print("3")
+        self.ennio_core.get_status()
 
     def training_mode(self):
         """
@@ -66,6 +68,13 @@ class WebEnnio(object):
 
         # Extract video features
         video_features, video_df = self.ennio_core.extract_video_features_for_evaluation(video_name)
+
+#        self.ennio_core.drop("video_features")
+#        _, _ = self.ennio_core.extract_features()
+#        self.ennio_core.drop("audio_features")
+#        _, _ = self.ennio_core.extract_features()
+
+#        self.ennio_core.get_status()
 
         # Call predict for all models
         results_dict = self.ennio_core.predict_audio_from_models(video_df)
@@ -128,4 +137,5 @@ class WebEnnio(object):
 # for my testing
 if __name__ == '__main__':
     we = WebEnnio()
+    #we.training_mode()
     print(we.evaluation_mode("https://www.youtube.com/watch?v=a-T4ZPP3k8U","02:15"))
