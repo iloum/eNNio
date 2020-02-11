@@ -141,7 +141,10 @@ class EnnIOCore:
             audio = self._db_manager.get_audio_by_id(audio_id)
             #print(audio)
             audio_path = audio.audio_path
-            new_name = self._ml_core.get_model_name_from_index(result) + ".mp4"
+            if result == -1:
+                new_name = "Random.mp4"
+            else:
+                new_name = self._ml_core.get_model_name_from_index(result) + ".mp4"
             export_path = os.path.join(self._eval_merged_dir, new_name)
             self.audio_video_merge(audio_path, video_path, export_path)
             paths.append((vid_id, result, export_path))
@@ -161,6 +164,7 @@ class EnnIOCore:
         # load the models
 
         predictions = self._ml_core.predict(video_df)
+        exceptions = []
 
         for index, clip_id in predictions.items():
             clip = self._db_manager.get_clip_by_id(clip_id)[-1]
@@ -171,7 +175,9 @@ class EnnIOCore:
             print("{index}. {audio_id} {audio_path}".format(index=index,
                                                             audio_id=clip.audio_from_clip,
                                                             audio_path=audio.audio_path))
+            exceptions.append(clip.audio_from_clip)
             results[index]=clip.audio_from_clip
+        results[-1] = self._db_manager.get_random_audio(exceptions)
         print(results)
 
         return results
