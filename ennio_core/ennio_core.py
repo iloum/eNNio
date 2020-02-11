@@ -5,6 +5,7 @@ import multiprocessing
 import time
 import pandas as pd
 import numpy as np
+import re
 from config_manager.config_manager import ConfigManager
 from data_aquisitor.data_aquisitor import DataAquisitor
 from ennio_exceptions import VideoAlreadyExist, EnnIOException
@@ -13,6 +14,13 @@ from feature_extractor.video_feature_exractor import VideoFeatureExtractor
 from feature_extractor.audio_feature_extractor import AudioFeatureExtractor
 from functools import reduce
 from ml_core.ml_core import MLCore
+
+VALID_URL = re.compile(r'^(?:http|ftp)s?://'  # http:// or https://
+                       r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
+                       r'localhost|'  # localhost...
+                       r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
+                       r'(?::\d+)?'  # optional port
+                       r'(?:/?|[/?]\S+)$', re.IGNORECASE)
 
 
 class EnnIOCore:
@@ -569,3 +577,101 @@ class EnnIOCore:
             if clip.start_time == start_time and clip.end_time == end_time:
                 return True
         return False
+
+    def training_mode(self):
+        """
+        trains ennIO on existing clips
+        :return:
+        """
+
+        # do_download_video_from_url_file
+        downloaded, failed = self.download_video_from_url_file()
+        print('Downloaded files')
+        for f in downloaded:
+            print(f)
+        print()
+        print('Failed to download')
+        for f in failed:
+            print(f)
+        print()
+
+        # do_extract_features
+        start_time = time.time()
+        video_extracted, audio_extracted = self.extract_features()
+        print("Finished in {:.1f} secs".format(time.time() - start_time))
+        print('Video features extracted from {} clips'.format(len(video_extracted)))
+        print('Audio features extracted from {} clips'.format(len(audio_extracted)))
+
+        # do_create_dataframes
+        # self.ennio_core.create_dataframe_files()
+
+        return
+
+    def evaluation_mode(self, url, start_time_str):
+        """
+        :param url: url for evaluation
+        :param start_time_str: start time in string format
+        :return: paths: a list of 4 combined videos in the form of tuples (video_id, model, path)
+        """
+        if any(i.isalpha() for i in start_time_str):
+            raise EnnIOException("start time must be just digits!")
+
+        # Download video
+        video_name = self.do_download_video_from_url(url, start_time_str)
+
+        # Extract video features
+        video_features, video_df = self.extract_video_features_for_evaluation(video_name)
+
+        # Call predict for all models plus one random
+        results_dict = self.predict_audio_from_models(video_df)
+
+        # Join Video and suggested audio
+        paths = self.merge_results(video_name, results_dict)
+
+        return paths
+
+    def update_winner(self, video_id, winner_model):
+        """
+        :param video_id:
+        :param winner_model:
+        :return:
+        """
+        if not isinstance(winner_model, str):
+            raise EnnIOException("winner model must be in string format!")
+        self.update_evaluation_vote(video_id, winner_model)
+        return
+
+    def live_ennio(self, url, start_time_str):
+        """
+        the live version of ennIO checks with the voter and trains based on best model
+        :param url: video url
+        :param start_time_str: starting time
+        :return: the path of the combined video
+        """
+        path = ""
+        if any(i.isalpha() for i in start_time_str):
+            raise EnnIOException("start time must be just digits!")
+        return path
+
+    def do_download_video_from_url(self, url, start_time):
+        """
+        Download Youtube video from url
+        Usage: download_video_from_url <URL>
+        """
+        try:
+            if ":" not in start_time:
+                print("Not valid start-time format - Valid format MM:SS")
+                return
+        except IndexError:
+            pass
+        print(start_time)
+        file_path = self.download_video_from_url(url=url,
+                                                            start_time_str=start_time, mode="evaluation")
+        if file_path:
+            print('Downloaded file')
+            print(file_path)
+        else:
+            print('Failed to download')
+            print(url, start_time)
+        return file_path
+

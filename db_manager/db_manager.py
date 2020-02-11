@@ -153,9 +153,10 @@ class DbManager(object):
         return tuple(table)
 
     def get_random_audio(self, exceptions):
-        rand = random.randrange(0, self.session.query(Audio).count())
+        audio_id = ''
         found = False
         while not found:
+            rand = random.randrange(0, self.session.query(Audio).count())
             audio_id = self.session.query(Audio)[rand].audio_id
             if audio_id not in exceptions:
                 found = True
