@@ -182,7 +182,7 @@ class EnnIOCore:
 
         return results
 
-    def use_model(self, url, start_time):  # input_file):
+    def use_models(self, url, start_time):  # input_file):
         """
         Method to use the existing model in order to predict a
         suitable music score. It assumes that the construct_model above has been called before
@@ -201,7 +201,7 @@ class EnnIOCore:
             clip =  self._db_manager.get_clip_by_id(clip_id)[-1]
             audio = self._db_manager.get_audio_by_id(clip.audio_from_clip)
             if not audio:
-                print("Audio '{}' predicted by model {} does not exist".format(audio_id, index))
+                print("Audio does not exist")
                 continue
             print("{index}. {audio_id} {audio_path}".format(index=index,
                                                             audio_id=clip.audio_from_clip,

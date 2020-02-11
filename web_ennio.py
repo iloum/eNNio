@@ -89,7 +89,7 @@ class WebEnnio(object):
 
     def live_ennio(self, url, start_time_str):
         """
-        the live version of ennIO
+        the live version of ennIO checks with the voter and trains based on best model
         :param url: video url
         :param start_time_str: starting time
         :return: the path of the combined video
@@ -126,4 +126,4 @@ class WebEnnio(object):
 if __name__ == '__main__':
     we = WebEnnio()
     #we.training_mode()
-    print(we.evaluation_mode("https://www.youtube.com/watch?v=a-T4ZPP3k8U","02:15"))
+#    print(we.evaluation_mode("https://www.youtube.com/watch?v=a-T4ZPP3k8U","02:15"))
