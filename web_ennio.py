@@ -82,10 +82,6 @@ class WebEnnio(object):
         # Join Video and suggested audio
         paths = self.ennio_core.merge_results(video_name, results_dict)
 
-        # Call predict for all models
-
-        # Join Video and suggested audio
-
         return paths
 
     def update_winner(self, video_id, winner_model):

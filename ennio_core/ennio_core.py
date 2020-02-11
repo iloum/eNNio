@@ -165,6 +165,51 @@ class EnnIOCore:
             ann_model.save_ml_core()
         self._models.append(ann_model)
 
+    def audio_video_merge(self, audio_path, video_path, export_path):
+        os.system(f"ffmpeg -y -t 60 -i {video_path} -i {audio_path} \
+                        -c:v copy -c:a aac -strict experimental {export_path}")
+
+    def merge_results(self, video_path, results):
+        """
+        uses audio_video_merge from utilities to produce n+1 clips, where n is the number of models
+        :param video_path:
+        :param results:
+        :return: a list of tuples (model, exported_path)
+        """
+        paths = []
+        vid_id = self._db_manager.get_evaluation_clip_by_path(video_path).clip_id
+        for result in results:
+            print("result ", result)
+            audio_id = np.array2string(results[result])[2:-2]
+            print(audio_id)
+            print(self._db_manager.audio_exists(audio_id))
+            audio = self._db_manager.get_audio_by_id(audio_id)
+            print(audio)
+            audio_path = audio.audio_path
+            new_name = result + ".mp4"
+            export_path = os.path.join(self._eval_merged_dir, new_name)
+            self.audio_video_merge(audio_path, video_path, export_path)
+            paths.append((vid_id, result, export_path))
+
+        return paths
+
+    def update_evaluation_vote(self,video_id, winner):
+        self._db_manager.update_voted_model(video_id, winner)
+
+    def predict_audio_from_models(self, video_df):
+        """
+        :param video_df:
+        :return: the dictionary with the results of all models {model_name: audio_id}
+        """
+
+        self.construct_model()
+        # load the models
+        ann_model, ann_trained = self._ml_core.create_model("ANN", self._model_dir)
+        if not ann_trained:
+            ann_model.train_model()
+            ann_model.save_ml_core()
+        self._models.append(ann_model)
+
         for model in self._models:
             self._predict_results[model.get_name()] = model.predict(video_df)
 
