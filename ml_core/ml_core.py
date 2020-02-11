@@ -88,6 +88,13 @@ class MLCore:
                                                                           new_video_ftrs)
         return predictions
 
+    def get_model_name_from_index(self,idx):
+        name = ""
+        for index, model_name in enumerate(self.available_models):
+            if idx == index:
+                name = model_name
+        return name
+
     def _save_model(self, model_name):
         """
         Method to save trained model
