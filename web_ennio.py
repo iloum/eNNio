@@ -59,7 +59,6 @@ class WebEnnio(object):
         :param start_time_str: start time in string format
         :return: paths: a list of 4 combined videos in the form of tuples (video_id, model, path)
         """
-        paths = []
         if any(i.isalpha() for i in start_time_str):
             raise exc.EnnIOException("start time must be just digits!")
 
@@ -68,13 +67,6 @@ class WebEnnio(object):
 
         # Extract video features
         video_features, video_df = self.ennio_core.extract_video_features_for_evaluation(video_name)
-
-#        self.ennio_core.drop("video_features")
-#        _, _ = self.ennio_core.extract_features()
-#        self.ennio_core.drop("audio_features")
-#        _, _ = self.ennio_core.extract_features()
-
-#        self.ennio_core.get_status()
 
         # Call predict for all models
         results_dict = self.ennio_core.predict_audio_from_models(video_df)
