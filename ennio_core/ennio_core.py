@@ -135,13 +135,13 @@ class EnnIOCore:
         vid_id = self._db_manager.get_evaluation_clip_by_path(video_path).clip_id
         for result in results:
             print("result ", result)
-            audio_id = np.array2string(results[result])[2:-2]
-            print(audio_id)
-            print(self._db_manager.audio_exists(audio_id))
+            audio_id = results[result]
+           # print(audio_id)
+           # print(self._db_manager.audio_exists(audio_id))
             audio = self._db_manager.get_audio_by_id(audio_id)
-            print(audio)
+            #print(audio)
             audio_path = audio.audio_path
-            new_name = result + ".mp4"
+            new_name = self._ml_core.get_model_name_from_index(result) + ".mp4"
             export_path = os.path.join(self._eval_merged_dir, new_name)
             self.audio_video_merge(audio_path, video_path, export_path)
             paths.append((vid_id, result, export_path))
@@ -156,19 +156,25 @@ class EnnIOCore:
         :param video_df:
         :return: the dictionary with the results of all models {model_name: audio_id}
         """
-
-        self.construct_model()
+        results = {}
+        self.construct_models()
         # load the models
-        ann_model, ann_trained = self._ml_core.create_model("ANN", self._model_dir)
-        if not ann_trained:
-            ann_model.train_model()
-            ann_model.save_ml_core()
-        self._models.append(ann_model)
 
-        for model in self._models:
-            self._predict_results[model.get_name()] = model.predict(video_df)
+        predictions = self._ml_core.predict(video_df)
 
-        return self._predict_results
+        for index, clip_id in predictions.items():
+            clip = self._db_manager.get_clip_by_id(clip_id)[-1]
+            audio = self._db_manager.get_audio_by_id(clip.audio_from_clip)
+            if not audio:
+                #print("Audio '{}' predicted by model {} does not exist".format(audio_id, index))
+                continue
+            print("{index}. {audio_id} {audio_path}".format(index=index,
+                                                            audio_id=clip.audio_from_clip,
+                                                            audio_path=audio.audio_path))
+            results[index]=clip.audio_from_clip
+        print(results)
+
+        return results
 
     def use_model(self, url, start_time):  # input_file):
         """
