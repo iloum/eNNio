@@ -10,10 +10,10 @@ class AudioFeatureExtractor:
 
     def extract_audio_features(self,
                                file_path,
-                               mid_window=5,
-                               mid_step=0.5,
-                               short_window=1,
-                               short_step=0.5,
+                               mid_window=2,
+                               mid_step=1,
+                               short_window=0.05,
+                               short_step=0.025,
                                get_names=True):
         """
         Method to extract audio features from an audio file
