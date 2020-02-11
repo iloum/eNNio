@@ -14,6 +14,9 @@ from feature_extractor.video_feature_exractor import VideoFeatureExtractor
 from feature_extractor.audio_feature_extractor import AudioFeatureExtractor
 from functools import reduce
 from ml_core.ml_core import MLCore
+import ml_core.mp_utils as mu
+
+
 
 VALID_URL = re.compile(r'^(?:http|ftp)s?://'  # http:// or https://
                        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
@@ -21,6 +24,7 @@ VALID_URL = re.compile(r'^(?:http|ftp)s?://'  # http:// or https://
                        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
                        r'(?::\d+)?'  # optional port
                        r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+
 
 
 class EnnIOCore:
@@ -209,7 +213,9 @@ class EnnIOCore:
         else:
             return results
 
+
     def download_video_from_url(self, url, start_time_str, mode="training"):
+
         """
         Method to download a video file from a youtube URL
         :param mode: default value "training" so as not to interfere with already functionality
@@ -241,6 +247,39 @@ class EnnIOCore:
             return path
         except EnnIOException:
             return
+
+
+    def predict_audio_from_models(self, eval_dataframe, url, start_time):  #input_file):
+        """
+        Method to use the best model in order to predict a
+        suitable music score. It assumes that the construct_model above has been called before
+        in order to create the models ans store them in a list
+        :return:
+        """
+        # self.extract_features(input_file)
+        #import pickle
+        #import random
+        #video_path = "D:\\Programming\\DataScience\\MasterDS\\Multimodal\\SemesterProject\\ennIO\\data\\video_features_df_{ftlist_[lbps,hogs,colors,flow],width_300,step_3}.pkl"
+        #video_df = pickle.load(open(video_path, "rb"))
+        #video_df['model_winner'] = 1
+        #eval_dataframe = video_df.copy()
+
+        self.construct_models()
+
+        new_vid_ftrs = self.get_video_features_for_prediction(url, start_time, start_time+20)
+
+        predictions = self._ml_core.predict(new_vid_ftrs)
+        #print(new_vid_ftrs.shape)
+        #print(eval_dataframe.shape)
+        best_model = mu.model_voter(new_vid_ftrs, eval_dataframe)
+        model_prediction_clip_id = predictions[best_model]
+
+        clip = self._db_manager.get_clip_by_id(model_prediction_clip_id)[-1]
+        audio = self._db_manager.get_audio_by_id(clip.audio_from_clip)
+
+        print("Best model: {index}. {audio_id} {audio_path}".format(index=best_model,
+                                                            audio_id=clip.audio_from_clip,
+                                                            audio_path=audio.audio_path))
 
     def download_video_from_url_file(self):
         """

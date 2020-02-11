@@ -56,6 +56,27 @@ class UserInterface(Cmd):
 
         self.ennio_core.use_models(url, start_time=start_time) #input_file=args)
 
+
+    # def do_predict_from_model(self, args):
+    #     """
+    #     Use an existing model to predict the score
+    #     Usage: use_model <filename>
+    #     """
+    #     # input example in terminal: ennIO> use_model https://www.youtube.com/watch?v=i-dJPoSlPfU 10
+    #     if not args:
+    #         print("Video url and start time are needed")
+    #         return
+    #
+    #     inputs = args.split()
+    #     url = inputs[0]
+    #     start_time = int(inputs[1])
+    #     if not re.match(VALID_URL, inputs[0]):
+    #         print("Not valid url")
+    #         return
+    #
+    #     self.ennio_core.predict_audio_from_models(url, start_time=start_time) #input_file=args)
+
+
     def do_download_video_from_url(self, args):
         """
         Download Youtube video from url
