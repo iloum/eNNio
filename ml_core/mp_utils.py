@@ -1,5 +1,8 @@
 import random
 import numpy as np
+from sklearn.neighbors import KNeighborsClassifier
+import data_preprocessor.data_preprocessor as preproc
+import pickle
 
 def my_train_test_split(percentage, df):
     test_idx_list = list()
@@ -43,3 +46,41 @@ def custom_train_test_split(v_ftrs, a_ftrs, m_ftrs, test_size, x_scl, y_scl, ran
     video_test = x_scl.transform(video_test_vls)
     audio_test = y_scl.transform(audio_test_vls)
     return video_train, video_test, audio_train, audio_test
+
+
+def model_voter(new_video_ftrs, eval_video_results_df):
+    '''
+    it is used to find the model with the best results in the evaluation dataset constructed by the users
+    :param new_video_ftrs: dataframe with the features of the new video
+    :param eval_video_results_df: dataframe with the features of the evaluation videos and also a column
+    model_winner which specifies which model was preferred
+    :return: the most voted model in a neighbor of 5 videos
+    '''
+    mdl_winners = list(eval_video_results_df['model_winner'].values)
+    eval_video_results_df_proc = eval_video_results_df.drop(['model_winner'], axis=1)
+    eval_video_ftrs = eval_video_results_df_proc.values
+
+    neigh = KNeighborsClassifier(n_neighbors=5, algorithm="brute", p=2)
+    neigh.fit(eval_video_ftrs, mdl_winners)
+
+    video_new_nparray = new_video_ftrs.values
+    size = video_new_nparray.shape[0]
+    video_new_nparray_reshaped = video_new_nparray.reshape((1, size))
+
+    knn_predict = neigh.predict(video_new_nparray_reshaped)
+
+    return knn_predict
+
+
+if __name__=='__main__':
+    video_path = "D:\\Programming\\DataScience\\MasterDS\\Multimodal\\SemesterProject\\ennIO\\data\\video_features_df_{ftlist_[lbps,hogs,colors,flow],width_300,step_3}.pkl"
+    video_df = pickle.load(open(video_path, "rb"))
+
+    vindex_lst = list(video_df.index.values)
+    vindex = random.choice(vindex_lst)
+    video_val = video_df.loc[vindex]
+
+    video_df['model_winner'] = 1
+
+    winner = model_voter(video_val, video_df)
+    print(winner)
