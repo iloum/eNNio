@@ -68,7 +68,7 @@ class WebEnnio(object):
         # Extract video features
         video_features, video_df = self.ennio_core.extract_video_features_for_evaluation(video_name)
 
-        # Call predict for all models
+        # Call predict for all models plus one random
         results_dict = self.ennio_core.predict_audio_from_models(video_df)
 
         # Join Video and suggested audio
