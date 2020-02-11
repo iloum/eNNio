@@ -74,7 +74,6 @@ def model_voter(new_video_ftrs, eval_video_results_df):
 
 if __name__=='__main__':
     video_path = "D:\\Programming\\DataScience\\MasterDS\\Multimodal\\SemesterProject\\ennIO\\data\\video_features_df_{ftlist_[lbps,hogs,colors,flow],width_300,step_3}.pkl"
-
     video_df = pickle.load(open(video_path, "rb"))
 
     vindex_lst = list(video_df.index.values)
