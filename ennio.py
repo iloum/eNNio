@@ -5,7 +5,7 @@ import re
 from time import time
 from cmd import Cmd
 from ennio_core.ennio_core import EnnIOCore
-
+import subprocess
 
 VALID_URL = re.compile(r'^(?:http|ftp)s?://' # http:// or https://
                        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|' #domain...
@@ -40,21 +40,21 @@ class UserInterface(Cmd):
     def do_use_model(self, args):
         """
         Use an existing model to predict the score
-        Usage: use_model <filename>
+        Usage: use_model <youtube-url> [<timestamp>]
+        Example: use_model https://www.youtube.com/watch?v=i-dJPoSlPfU 0:10
         """
-        # input example in terminal: ennIO> use_model https://www.youtube.com/watch?v=i-dJPoSlPfU 10
-        if not args:
-            print("Video url and start time are needed")
+        try:
+            start_time, url = self._validate_url_start_time(args)
+        except UserWarning as warn:
+            print(warn)
             return
 
-        inputs = args.split()
-        url = inputs[0]
-        start_time = int(inputs[1])
-        if not re.match(VALID_URL, inputs[0]):
-            print("Not valid url")
-            return
+        video_name, results = self.ennio_core.use_models(url, start_time_str=start_time)
 
-        self.ennio_core.use_models(url, start_time=start_time) #input_file=args)
+        print("Suggestions for video: {}".format(video_name))
+        for index, file_path in results:
+            print("{index}. {audio_path}".format(index=index,
+                                                 audio_path=file_path))
 
 
     # def do_predict_from_model(self, args):
@@ -82,25 +82,13 @@ class UserInterface(Cmd):
         Download Youtube video from url
         Usage: download_video_from_url <URL>
         """
-        if not args:
-            print("Youtube URL needed for download")
-            return
-        inputs = args.split()
-        if not re.match(VALID_URL, inputs[0]):
-            print("Not valid url")
+        try:
+            start_time, url = self._validate_url_start_time(args)
+        except UserWarning as warn:
+            print(warn)
             return
 
-        start_time = None
-        try:
-            start_time = inputs[1]
-            if ":" not in start_time:
-                print("Not valid start-time format - Valid format MM:SS")
-                return
-        except IndexError:
-            pass
-        print(inputs[0])
-        print(start_time)
-        file_path = self.ennio_core.download_video_from_url(url=inputs[0],
+        file_path = self.ennio_core.download_video_from_url(url=url,
                                                             start_time_str=start_time)
         if file_path:
             print('Downloaded file')
@@ -108,6 +96,27 @@ class UserInterface(Cmd):
         else:
             print('Failed to download')
             print(args)
+
+    @staticmethod
+    def _validate_url_start_time(args):
+        if not args:
+            raise UserWarning("Youtube URL needed for download")
+
+        inputs = args.split()
+        url = inputs[0]
+        if not re.match(VALID_URL, url):
+            raise UserWarning("Not valid url")
+
+        start_time = None
+        try:
+            start_time = inputs[1]
+            print(start_time)
+            if ":" not in start_time:
+                raise UserWarning("Not valid start-time format - Valid format MM:SS")
+        except IndexError:
+            pass
+
+        return start_time, url
 
     def do_download_video_from_url_file(self, args):
         """
@@ -143,7 +152,7 @@ class UserInterface(Cmd):
     def do_drop(self, args):
         """
         Drop information from db
-        Usage: drop [audio_features] [video_features] [tables]
+        Usage: drop [audio_features] [video_features] [tables] [evaluation_table]
         """
         if not args:
             print("Please give one or more options")
@@ -158,6 +167,33 @@ class UserInterface(Cmd):
         """
         self.ennio_core.create_dataframe_files()
 
+    def do_evaluate(self, args):
+        """
+        Evaluate models
+        Usage: evaluate <youtube-url> [<timestamp>]
+        Example: evaluate https://www.youtube.com/watch?v=CL5NeUZTzvw 0:15
+        """
+        try:
+            start_time, url = self._validate_url_start_time(args)
+        except UserWarning as warn:
+            print(warn)
+            return
+        video_id, results = self.ennio_core.evaluation_mode(url, start_time_str=start_time)
+
+        num_to_model = {}
+        for num, (model, exported_path) in enumerate(results.items(), start=1):
+            print()
+            print("Playing video number {}".format(num))
+            print()
+            num_to_model[num] = model
+            subprocess.run(['ffplay', '-autoexit', '-loglevel', 'quiet', exported_path])
+            # while input("Replay [y/n]: ") == "y":
+            #     subprocess.run(['ffplay', '-autoexit', exported_path])
+
+        user_preference = input("Which score did you find more suitable {}: ".format(num_to_model.keys()))
+
+        self.ennio_core.update_evaluation_vote(video_id, num_to_model[int(user_preference)])
+        print("Thanks! Try another?")
 
 if __name__=='__main__':
     # try:

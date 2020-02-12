@@ -196,7 +196,7 @@ class DbManager(object):
                                   clip_title=clip_title,
                                   clip_path=clip_path,
                                   video_features=video_features.tostring() if
-                                  video_features else "",
+                                  video_features is not None else "",
                                   audio_id=audio_id,
                                   voted_model=voted_model)
         self.session.add(new_clip)
