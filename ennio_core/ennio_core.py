@@ -162,35 +162,7 @@ class EnnIOCore:
     def update_evaluation_vote(self,video_id, winner):
         self._db_manager.update_voted_model(video_id, winner)
 
-    def predict_audio_from_models(self, video_df):
-        """
-        :param video_df:
-        :return: the dictionary with the results of all models {model_name: audio_id}
-        """
-        results = {}
-        self.construct_models()
-        # load the models
-
-        predictions = self._ml_core.predict(video_df)
-        exceptions = []
-
-        for index, clip_id in predictions.items():
-            clip = self._db_manager.get_clip_by_id(clip_id)[-1]
-            audio = self._db_manager.get_audio_by_id(clip.audio_from_clip)
-            if not audio:
-                #print("Audio '{}' predicted by model {} does not exist".format(audio_id, index))
-                continue
-            print("{index}. {audio_id} {audio_path}".format(index=index,
-                                                            audio_id=clip.audio_from_clip,
-                                                            audio_path=audio.audio_path))
-            exceptions.append(clip.audio_from_clip)
-            results[index]=clip.audio_from_clip
-        results[-1] = self._db_manager.get_random_audio(exceptions)
-        print(results)
-
-        return results
-
-    def use_models(self, url, start_time):  # input_file):
+    def use_models(self, url, start_time, mode='training'):  # input_file):
         """
         Method to use the existing model in order to predict a
         suitable music score. It assumes that the construct_model above has been called before
@@ -199,10 +171,18 @@ class EnnIOCore:
         """
         # self.extract_features(input_file)
 
+        if mode == 'evaluation':
+            # Download video
+            video_name = self.do_download_video_from_url(url, start_time)
+            # Extract video features
+            new_vid_ftrs = self.extract_video_features_for_evaluation(video_name)
+        else:
+            new_vid_ftrs = self.get_video_features_for_prediction(url, start_time, start_time + 20)
+
+        # Call predict for all models
+        exceptions = []
+        results = {}
         self.construct_models()
-
-        new_vid_ftrs = self.get_video_features_for_prediction(url, start_time, start_time + 20)
-
         predictions = self._ml_core.predict(new_vid_ftrs)
 
         for index, clip_id in predictions.items():
@@ -214,6 +194,13 @@ class EnnIOCore:
             print("{index}. {audio_id} {audio_path}".format(index=index,
                                                             audio_id=clip.audio_from_clip,
                                                             audio_path=audio.audio_path))
+            exceptions.append(clip.audio_from_clip)
+            results[index] = clip.audio_from_clip
+        if mode=='evaluation':
+            results[-1] = self._db_manager.get_random_audio(exceptions)
+        print(results)
+
+        return video_name, results
 
     def download_video_from_url(self, url, start_time_str, mode="training"):
         """
@@ -410,7 +397,7 @@ class EnnIOCore:
         video_features_reshaped = video_features.reshape((1, size))
         video_df = pd.DataFrame(video_features_reshaped, columns=video_feature_names)
 
-        return video_features, video_df
+        return video_df
 
     def extract_features(self):
         """
@@ -619,14 +606,8 @@ class EnnIOCore:
         if any(i.isalpha() for i in start_time_str):
             raise EnnIOException("start time must be just digits!")
 
-        # Download video
-        video_name = self.do_download_video_from_url(url, start_time_str)
-
-        # Extract video features
-        video_features, video_df = self.extract_video_features_for_evaluation(video_name)
-
-        # Call predict for all models plus one random
-        results_dict = self.predict_audio_from_models(video_df)
+        # Use model with evaluation parameter
+        video_name, results_dict = self.use_models(url, start_time_str, mode='evaluation')
 
         # Join Video and suggested audio
         paths = self.merge_results(video_name, results_dict)
