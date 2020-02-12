@@ -193,22 +193,16 @@ class EnnIOCore:
 
         return video_path, results
 
-    def download_video_from_url(self, url, start_time_str, mode="training"):
+
+    def download_video_from_url(self, url, start_time_str):
         """
         Method to download a video file from a youtube URL
-        :param mode: default value "training" so as not to interfere with already functionality
         :param url: A youtube video URL
         :param start_time_str: Clip start time
         :return: Downloaded file name
         """
-        if mode == "evaluation":
-            clips = self._db_manager.get_evaluation_clips_by_url(url)
-        else:
-            clips = self._db_manager.get_clips_by_url(url)
-        if clips and mode == "evaluation":
-            print("URL already in DB")
-            return clips[0].clip_path
-        elif clips:
+        clips = self._db_manager.get_clips_by_url(url)
+        if clips:
             print("URL already in DB")
             return
         if start_time_str:
@@ -216,11 +210,7 @@ class EnnIOCore:
         else:
             start_time = 0
         try:
-            if mode == "evaluation":
-                path = self._download_evaluation_video_from_entry(url, start_time,
-                                                                  start_time + 20)
-            else:
-                path = self._download_video_from_entry(url, start_time,
+            path = self._download_video_from_entry(url, start_time,
                                                        start_time + 20)
             return path
         except EnnIOException:
@@ -518,50 +508,6 @@ class EnnIOCore:
         print("Saved to {file_name}".format(file_name=metadata_file))
 
         return video_df, audio_df, metadata_df
-
-
-    def _download_evaluation_video_from_entry(self, url, start_time, end_time):
-        """
-        Downloads and stores video in Evaluation table
-        :param url:
-        :param start_time:
-        :param end_time:
-        :return: the path of downloaded video. this will be used to extract video features
-        """
-        available_cpus = multiprocessing.cpu_count()
-        if available_cpus > 1:
-            available_cpus -= 1
-
-
-        temp = self._data_aquisitor.download_from_url(url,
-                                                      start_time=time.strftime("%M:%S", time.gmtime(start_time)),
-                                                      end_time=time.strftime("%M:%S", time.gmtime(end_time)),
-                                                      threads=available_cpus)
-        self._data_aquisitor.set_download_location(self._video_download_dir)
-        if not temp:
-            raise EnnIOException
-        metadata = temp[-1]
-        video_stream_name = os.path.basename(metadata['filenames'][
-                                                 'parsed_video'][-1])
-        # audio_stream_name = os.path.basename(metadata['filenames'][
-        #                                         'parsed_audio'][-1])
-        video_file_path = os.path.join(self._eval_video_stream_dir,
-                                       video_stream_name)
-        # audio_file_path = os.path.join(self._audio_stream_dir,
-        #                               audio_stream_name)
-        video_stream_id = self._get_id(video_file_path)
-        # audio_stream_id = self._get_id(audio_file_path)
-        # if not self._db_manager.audio_exists(audio_stream_id):
-        #    self._db_manager.add_audio(audio_id=audio_stream_id,
-        #                               audio_path=audio_file_path)
-        if not self._db_manager.evaluation_video_exists(video_stream_id):
-            self._db_manager.add_evaluation_clip(clip_id=video_stream_id,
-                                                 url=url,
-                                                 start_time=start_time,
-                                                 end_time=end_time,
-                                                 clip_path=video_file_path,
-                                                 clip_title=video_stream_name)
-        return video_file_path
 
 
     def get_video_features_for_single_file(self, url, start_time, end_time, mode="prediction"):
