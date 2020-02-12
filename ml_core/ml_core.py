@@ -53,8 +53,6 @@ class MLCore:
         if model_name == "ANN":
             _, insize = self.video_df.shape
             _, outsize = self.audio_df.shape
-            print(insize)
-            print(outsize)
             self.models[model_name] = ANN(model_name, batch_size=64, epochs=100,
                                           input_size=insize, output_size=outsize-1)
         elif model_name == "Classifier":
