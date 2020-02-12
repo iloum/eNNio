@@ -190,7 +190,7 @@ class UserInterface(Cmd):
             # while input("Replay [y/n]: ") == "y":
             #     subprocess.run(['ffplay', '-autoexit', exported_path])
 
-        user_preference = input("Which score did you find more suitable {}: ".format(num_to_model.keys()))
+        user_preference = input("Which score did you find more suitable {}: ".format(list(num_to_model.keys())))
 
         self.ennio_core.update_evaluation_vote(video_id, num_to_model[int(user_preference)])
         print("Thanks! Try another?")
