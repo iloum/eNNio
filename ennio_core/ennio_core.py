@@ -183,7 +183,7 @@ class EnnIOCore:
             new_vid_ftrs = self.extract_video_features_for_evaluation(video_name)
         else:
             # downloads and extracts features w/o DB insertion
-            new_vid_ftrs = self.get_video_features_for_prediction(url, start_time, start_time + 20)
+            new_vid_ftrs, _ = self.get_video_features_for_prediction(url, start_time, start_time + 20)
 
         # Call predict for all models
         exceptions = []
@@ -203,7 +203,7 @@ class EnnIOCore:
             exceptions.append(clip.audio_from_clip)
             results[index] = clip.audio_from_clip
 
-        if mode=='evaluation':
+        if mode == 'evaluation':
             # add a random audio
             results[-1] = self._db_manager.get_random_audio(exceptions)
         print(results)
@@ -212,7 +212,6 @@ class EnnIOCore:
             return video_name, results
         else:
             return results
-
 
     def download_video_from_url(self, url, start_time_str, mode="training"):
 
@@ -266,7 +265,7 @@ class EnnIOCore:
 
         self.construct_models()
 
-        new_vid_ftrs = self.get_video_features_for_prediction(url, start_time, start_time+20)
+        new_vid_ftrs, video_path = self.get_video_features_for_prediction(url, start_time, start_time+20)
 
         predictions = self._ml_core.predict(new_vid_ftrs)
         #print(new_vid_ftrs.shape)
@@ -280,6 +279,7 @@ class EnnIOCore:
         print("Best model: {index}. {audio_id} {audio_path}".format(index=best_model,
                                                             audio_id=clip.audio_from_clip,
                                                             audio_path=audio.audio_path))
+        return audio.audio_path, video_path
 
     def download_video_from_url_file(self):
         """
@@ -436,6 +436,7 @@ class EnnIOCore:
 
         video_features, video_feature_names = self._video_feature_extractor.extract_video_features(video_path,
                                                                                                    **video_extractor_kw_args)
+        self._video_feature_names = video_feature_names
         clip = self._db_manager.get_evaluation_clip_by_path(video_path)
         clip.video_features = video_features.tostring()
         self._db_manager.save()
@@ -523,6 +524,18 @@ class EnnIOCore:
             self._db_manager.clear_audio_table()
             self._db_manager.clear_clips_table()
 
+    def create_evaluation_dataframe(self):
+        features = dict()
+        for clip in self._db_manager.get_all_evaluation_clips():
+            video_features_exist_in_db = clip.video_features != ""
+
+            if video_features_exist_in_db:
+                features[clip.clip_id] = np.hstack((np.frombuffer(clip.video_features), clip.voted_model))
+
+        video_df = pd.DataFrame.from_dict(features, orient='index',
+                                              columns=self._video_feature_names + ['model_winner'])
+        return video_df
+
     def create_dataframe_files(self):
         video_features = dict()
         audio_features = dict()
@@ -601,7 +614,7 @@ class EnnIOCore:
 
         video_df = pd.DataFrame(video_features_reshaped, columns=video_feature_names)
 
-        return video_df
+        return video_df, video_file_path
 
     @staticmethod
     def _time_string_to_seconds(time_string):
@@ -681,7 +694,12 @@ class EnnIOCore:
         path = ""
         if any(i.isalpha() for i in start_time_str):
             raise EnnIOException("start time must be just digits!")
-        return path
+        eval_df = self.create_evaluation_dataframe()
+        audio_path, video_path = self.predict_audio_from_models(eval_df, url, start_time_str)
+        export_path = os.path.join(self._eval_merged_dir, "Result.mp4")
+        self.audio_video_merge(audio_path, video_path, export_path)
+
+        return export_path
 
     def do_download_video_from_url(self, url, start_time):
         """
