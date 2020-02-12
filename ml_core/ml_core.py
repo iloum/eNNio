@@ -34,21 +34,31 @@ class MLCore:
             self._train_model(model_name)
 
     def create_model(self, model_name):
-        stored_models = fm.getfiledictionary(path=self.model_path)
+        # Model saving needs reviewing
+        # stored_models = fm.getfiledictionary(path=self.model_path)
+        # print(self.model_path)
+        # print(stored_models)
+        # print(model_name)
+        #
+        # # if model exist, load it
+        # if model_name in stored_models.keys():
+        #     self.models[model_name] = pickle.load(open(stored_models[model_name], "rb"))
+        #     self.is_model_trained[model_name] = True
+        #     return
 
-        # if model exist, load it
-        if model_name in stored_models.keys():
-            self.models[model_name] = pickle.load(open(stored_models[model_name], "rb"))
-            self.is_model_trained[model_name] = True
+        #If model exists do not overwrite it
+        if self.models[model_name]:
             return
 
         if model_name == "ANN":
-                _, insize = self.video_df.shape
-                _, outsize = self.audio_df.shape
-                self.models[model_name] = ANN(model_name, batch_size=64, epochs=100,
-                                              input_size=insize, output_size=outsize-1)
+            _, insize = self.video_df.shape
+            _, outsize = self.audio_df.shape
+            print(insize)
+            print(outsize)
+            self.models[model_name] = ANN(model_name, batch_size=64, epochs=100,
+                                          input_size=insize, output_size=outsize-1)
         elif model_name == "Classifier":
-                self.models[model_name] = Classifier(model_name)
+            self.models[model_name] = Classifier(model_name)
 
         self.is_model_trained[model_name] = False
 
@@ -62,7 +72,7 @@ class MLCore:
             return
 
         self.models[model_name].train_ml_model(self.video_df, self.audio_df, self.meta_df)
-        self._save_model(model_name)
+        # self._save_model(model_name)
         self.is_model_trained[model_name] = True
 
     def evaluate_model(self):
