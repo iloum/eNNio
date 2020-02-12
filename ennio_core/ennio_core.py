@@ -49,6 +49,7 @@ class EnnIOCore:
         self._evaluation_dir = None
         self._eval_merged_dir = None
         self._eval_video_stream_dir = None
+        self._video_live_merged = None
 
     def setup(self):
         self._config_manager.read_config()
@@ -66,6 +67,7 @@ class EnnIOCore:
         self._video_live_dir = os.path.join(self._data_dir, 'live')  # added for models by IL 8/2
         live_parsed_dir = os.path.join(self._video_live_dir, 'parsed')
         self._video_stream_dir_live = os.path.join(live_parsed_dir, 'video')
+        self._video_live_merged = os.path.join(self._video_live_dir, 'merged')
         self._create_directories()
         self._data_aquisitor.set_download_location(self._video_download_dir)
         self._db_manager.setup(os.path.join(self._data_dir, self._config_manager.get_field('db-file-name')))
@@ -247,7 +249,6 @@ class EnnIOCore:
         except EnnIOException:
             return
 
-
     def predict_audio_from_models(self, eval_dataframe, url, start_time):  #input_file):
         """
         Method to use the best model in order to predict a
@@ -256,12 +257,14 @@ class EnnIOCore:
         :return:
         """
         # self.extract_features(input_file)
-        #import pickle
-        #import random
-        #video_path = "D:\\Programming\\DataScience\\MasterDS\\Multimodal\\SemesterProject\\ennIO\\data\\video_features_df_{ftlist_[lbps,hogs,colors,flow],width_300,step_3}.pkl"
-        #video_df = pickle.load(open(video_path, "rb"))
-        #video_df['model_winner'] = 1
-        #eval_dataframe = video_df.copy()
+        # import pickle
+        # import random
+        # video_path = "D:\\Programming\\DataScience\\MasterDS\\Multimodal\\SemesterProject\\ennIO\\data\\video_features_df_{ftlist_[lbps,hogs,colors,flow],width_300,step_3}.pkl"
+        # video_df = pickle.load(open(video_path, "rb"))
+        # video_df['model_winner'] = 0
+        # eval_dataframe = video_df.copy()
+
+
 
         self.construct_models()
 
@@ -692,11 +695,11 @@ class EnnIOCore:
         :return: the path of the combined video
         """
         path = ""
-        if any(i.isalpha() for i in start_time_str):
-            raise EnnIOException("start time must be just digits!")
+        #if any(i.isalpha() for i in start_time_str):
+        #    raise EnnIOException("start time must be just digits!")
         eval_df = self.create_evaluation_dataframe()
         audio_path, video_path = self.predict_audio_from_models(eval_df, url, start_time_str)
-        export_path = os.path.join(self._eval_merged_dir, "Result.mp4")
+        export_path = os.path.join(self._video_live_merged, "Result.mp4")
         self.audio_video_merge(audio_path, video_path, export_path)
 
         return export_path

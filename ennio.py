@@ -74,7 +74,7 @@ class UserInterface(Cmd):
     #         print("Not valid url")
     #         return
     #
-    #     self.ennio_core.predict_audio_from_models(url, start_time=start_time) #input_file=args)
+    #     self.ennio_core.live_ennio(url, start_time) #input_file=args)
 
 
     def do_download_video_from_url(self, args):
