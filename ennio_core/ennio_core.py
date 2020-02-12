@@ -171,12 +171,14 @@ class EnnIOCore:
         """
         # self.extract_features(input_file)
 
+        video_name = ""
         if mode == 'evaluation':
             # Download video
             video_name = self.do_download_video_from_url(url, start_time)
-            # Extract video features
+            # Extract video features and add to Evaluation DB
             new_vid_ftrs = self.extract_video_features_for_evaluation(video_name)
         else:
+            # downloads and extracts features w/o DB insertion
             new_vid_ftrs = self.get_video_features_for_prediction(url, start_time, start_time + 20)
 
         # Call predict for all models
@@ -186,7 +188,7 @@ class EnnIOCore:
         predictions = self._ml_core.predict(new_vid_ftrs)
 
         for index, clip_id in predictions.items():
-            clip =  self._db_manager.get_clip_by_id(clip_id)[-1]
+            clip = self._db_manager.get_clip_by_id(clip_id)[-1]
             audio = self._db_manager.get_audio_by_id(clip.audio_from_clip)
             if not audio:
                 print("Audio does not exist")
@@ -196,11 +198,16 @@ class EnnIOCore:
                                                             audio_path=audio.audio_path))
             exceptions.append(clip.audio_from_clip)
             results[index] = clip.audio_from_clip
+
         if mode=='evaluation':
+            # add a random audio
             results[-1] = self._db_manager.get_random_audio(exceptions)
         print(results)
 
-        return video_name, results
+        if mode == 'evaluation':
+            return video_name, results
+        else:
+            return results
 
     def download_video_from_url(self, url, start_time_str, mode="training"):
         """
