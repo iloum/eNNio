@@ -70,7 +70,7 @@ class ConfigManager:
 
         self._config['VIDEO'] = {}
         self.set_field(field_name="feature-types",
-                       value='["lbps", "hogs", "colors"]',
+                       value='["lbps", "hogs", "colors", "flow"]',
                        label='VIDEO')
         self.set_field(field_name="resize-width",
                        value="300",

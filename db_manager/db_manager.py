@@ -3,6 +3,7 @@ from sqlalchemy import exc, exists
 from sqlalchemy.orm import create_session
 import numpy as np
 import os
+import random
 
 from db_manager.data_schema import Base, Clip, clip_header, Audio, audio_header, Feature, UserEvaluation, evaluation_header
 
@@ -151,6 +152,16 @@ class DbManager(object):
         table.extend([audio.get_row() for audio in audios])
         return tuple(table)
 
+    def get_random_audio(self, exceptions):
+        audio_id = ''
+        found = False
+        while not found:
+            rand = random.randrange(0, self.session.query(Audio).count())
+            audio_id = self.session.query(Audio)[rand].audio_id
+            if audio_id not in exceptions:
+                found = True
+        return audio_id
+
     def _update_feature_names(self, feature_type, feature_names):
         instance = self.session.query(Feature).filter(Feature.features_type == feature_type).first()
         instance.feature_names = "|".join(feature_names)
@@ -197,6 +208,12 @@ class DbManager(object):
 
     def get_evaluation_clips_by_url(self, url):
         return self.session.query(UserEvaluation).filter_by(url=url).all()
+
+    def get_evaluation_clips_by_path(self, path):
+        return self.session.query(UserEvaluation).filter_by(clip_path=path).all()
+
+    def get_evaluation_clip_by_path(self, path):
+        return self.session.query(UserEvaluation).filter_by(clip_path=path).first()
 
     def get_evaluation_clips_by_id(self, id):
         return self.session.query(UserEvaluation).filter_by(clip_id=id).all()

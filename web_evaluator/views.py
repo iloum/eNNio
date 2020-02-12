@@ -2,13 +2,14 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-from web_ennio.web_ennio import WebEnnio
+from ennio_core.ennio_core import EnnIOCore
 from ennio_exceptions import VideoAlreadyExist
 import re
 
 RE_YOUTUBE_URL = re.compile("^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$")
 RE_TIMESTAMP = re.compile("\d{2}:\d{2}")
-ennio = WebEnnio()
+ennio = EnnIOCore()
+ennio.setup()
 
 def home(request):
     return render(request, 'web_evaluator/home.html', {'title': 'Evaluation Home'})
