@@ -24,7 +24,7 @@ EnnIOCore(BASE_DIR).setup()
 SECRET_KEY = '3d35#a33*wx=)s+^st*%8tpyyp0y*d$mr%#4c7-i6v(o@us^cl'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -124,7 +124,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, "static/")
 
-MEDIA_ROOT = os.path.join(BASE_DIR, r'data/downloads/parsed/video/')
+MEDIA_ROOT = os.path.join(BASE_DIR, r'data/')
 
 MEDIA_URL = '/media/'
 
