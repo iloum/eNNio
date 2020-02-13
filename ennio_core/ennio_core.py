@@ -173,7 +173,7 @@ class EnnIOCore:
         exceptions = []
         results = {}
         self.construct_models()
-        predictions = self._ml_core.predict(new_vid_ftrs)
+        predictions = self._ml_core.predict(new_vid_ftrs, video_path)
 
         for index, clip_id in predictions.items():
             clip = self._db_manager.get_clip_by_id(clip_id)[-1]
@@ -233,7 +233,7 @@ class EnnIOCore:
         new_vid_ftrs, video_path = self.get_video_features_for_single_file(url=url, start_time=start_time,
                                                                            end_time=start_time + 20,
                                                                            mode="prediction")
-        predictions = self._ml_core.predict(new_vid_ftrs)
+        predictions = self._ml_core.predict(new_vid_ftrs, new_video_path=video_path)
 
         best_model = mu.model_voter(new_vid_ftrs, eval_dataframe)
         model_prediction_clip_id = predictions[best_model]
@@ -283,8 +283,6 @@ class EnnIOCore:
                 start_time += 20
 
         return downloaded_videos, failed_videos
-
-
 
     def _download_video_from_entry(self, url, start_time, end_time, comment="", mismatch_url="", mismatch_title=""):
         available_cpus = multiprocessing.cpu_count()
@@ -336,6 +334,9 @@ class EnnIOCore:
 
         print("AUDIO TABLE")
         print("Number of audio clips in the db: {}".format(len(self._db_manager.dump_audio_table()) - 1))
+
+        print("EVALUATION TABLE")
+        print("Number of eval clips in the db: {}".format(len(self._db_manager.dump_evaluation_clips()) - 1))
 
     def _get_video_extractor_config(self):
         config = self._config_manager.get_all_fields(label='VIDEO')

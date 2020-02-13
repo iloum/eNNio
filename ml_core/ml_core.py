@@ -74,7 +74,7 @@ class MLCore:
         loss = self.models["ANN"].evaluate_ml_model(self.video_df, self.audio_df, self.meta_df)
         return loss
 
-    def predict(self, new_video_ftrs):
+    def predict(self, new_video_ftrs, new_video_path):
         """
         Method to suggest a music score for a video
         :param new_video_ftrs: Features of the video
