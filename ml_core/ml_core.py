@@ -34,21 +34,17 @@ class MLCore:
             self._train_model(model_name)
 
     def create_model(self, model_name):
-        # Model saving needs reviewing
-        # stored_models = fm.getfiledictionary(path=self.model_path)
-        # print(self.model_path)
-        # print(stored_models)
-        # print(model_name)
-        #
-        # # if model exist, load it
-        # if model_name in stored_models.keys():
-        #     self.models[model_name] = pickle.load(open(stored_models[model_name], "rb"))
-        #     self.is_model_trained[model_name] = True
-        #     return
-
         #If model exists do not overwrite it
         if self.models[model_name]:
             return
+
+        #stored_models = fm.getfiledictionary(path=self.model_path)
+
+        # if model exist, load it
+        #if model_name in stored_models.keys():
+        #    self.models[model_name] = pickle.load(open(stored_models[model_name], "rb"))
+        #    self.is_model_trained[model_name] = True
+        #    return
 
         if model_name == "ANN":
             _, insize = self.video_df.shape
@@ -105,5 +101,6 @@ class MLCore:
         :param model_name: Name of the file to save model to
         :return:
         """
-        pickle.dump(self.models[model_name], open(os.path.join(self.model_path, model_name), "wb"))
+        pass
+        #pickle.dump(self.models[model_name], open(os.path.join(self.model_path, model_name), "wb"))
 

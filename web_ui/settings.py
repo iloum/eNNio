@@ -24,7 +24,7 @@ EnnIOCore(BASE_DIR).setup()
 SECRET_KEY = '3d35#a33*wx=)s+^st*%8tpyyp0y*d$mr%#4c7-i6v(o@us^cl'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 

@@ -3,6 +3,7 @@ from tensorflow.keras.layers import Dense, Dropout
 from tensorflow.keras.optimizers import SGD, Adam, RMSprop
 from ml_core.ml_model import MLModel
 from data_preprocessor import data_preprocessor as dp
+import tensorflow as tf
 from tensorflow.keras import regularizers
 from ml_core import mp_utils as mu
 from sklearn.neighbors import KNeighborsClassifier
