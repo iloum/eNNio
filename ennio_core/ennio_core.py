@@ -15,7 +15,7 @@ from feature_extractor.audio_feature_extractor import AudioFeatureExtractor
 from functools import reduce
 from ml_core.ml_core import MLCore
 import ml_core.mp_utils as mu
-
+from utilities.singleton import Singleton
 
 
 VALID_URL = re.compile(r'^(?:http|ftp)s?://'  # http:// or https://
@@ -26,10 +26,10 @@ VALID_URL = re.compile(r'^(?:http|ftp)s?://'  # http:// or https://
                        r'(?:/?|[/?]\S+)$', re.IGNORECASE)
 
 
-
-class EnnIOCore:
-    def __init__(self):
-        self._config_manager = ConfigManager()
+class EnnIOCore(object, metaclass=Singleton):
+    def __init__(self, project_root='.'):
+        self._project_root = project_root
+        self._config_manager = ConfigManager(path=project_root)
         self._data_aquisitor = DataAquisitor()
         self._db_manager = DbManager()
         self._video_feature_extractor = VideoFeatureExtractor()
@@ -53,7 +53,7 @@ class EnnIOCore:
 
     def setup(self):
         self._config_manager.read_config()
-        self._data_dir = self._config_manager.get_field('data-folder')
+        self._data_dir = os.path.join(self._project_root, self._config_manager.get_field('data-folder'))
         self._video_download_dir = os.path.join(self._data_dir, "downloads")
         parsed_dir = os.path.join(self._video_download_dir, 'parsed')
         self._evaluation_dir = os.path.join(self._data_dir, 'evaluation')
@@ -62,7 +62,8 @@ class EnnIOCore:
         self._eval_merged_dir = os.path.join(self._evaluation_dir, 'merged')
         self._video_stream_dir = os.path.join(parsed_dir, 'video')
         self._audio_stream_dir = os.path.join(parsed_dir, 'audio')
-        self._url_list_file_location = self._config_manager.get_field('urls-list-file')
+        self._url_list_file_location = os.path.join(self._project_root,
+                                                    self._config_manager.get_field('urls-list-file'))
         self._model_dir = os.path.join(self._data_dir, 'models')  # added for models by IL 8/2
         self._video_live_dir = os.path.join(self._data_dir, 'live')  # added for models by IL 8/2
         live_parsed_dir = os.path.join(self._video_live_dir, 'parsed')
@@ -445,7 +446,7 @@ class EnnIOCore:
         return video_df
 
     def create_dataframe_files(self):
-        audio_df, metadata_df, video_df = self._create_dataframes()
+        video_df, audio_df, metadata_df,  = self._create_dataframes()
 
         options_str = str(self._get_video_extractor_config()).replace(" ", "").replace("'", "").replace(":", "_")
         video_features_file = "video_features_df_{options}.pkl".format(options=options_str)
@@ -484,7 +485,7 @@ class EnnIOCore:
                                           columns=self._audio_feature_names)
         metadata_df = pd.DataFrame.from_dict(metadata, orient='index',
                                              columns=metadata_columns)
-        return audio_df, metadata_df, video_df
+        return video_df, audio_df, metadata_df
 
     def _get_video_features_for_single_file(self, url, start_time, end_time, mode="prediction"):
         """
@@ -564,7 +565,6 @@ class EnnIOCore:
 
         # Use model with evaluation parameter
         video_path, results_dict = self.use_models(url, start_time_str, mode='evaluation')
-
         vid_id = self._db_manager.get_evaluation_clip_by_path(video_path).clip_id
         # Join Video and suggested audio
         results = self._merge_results(video_path, results_dict)
