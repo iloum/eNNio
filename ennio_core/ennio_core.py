@@ -27,7 +27,7 @@ VALID_URL = re.compile(r'^(?:http|ftp)s?://'  # http:// or https://
 
 
 class EnnIOCore(object, metaclass=Singleton):
-    def __init__(self, project_root):
+    def __init__(self, project_root='.'):
         self._project_root = project_root
         self._config_manager = ConfigManager(path=project_root)
         self._data_aquisitor = DataAquisitor()
