@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+import os
 import sys
 import re
 from time import time
@@ -18,7 +18,7 @@ VALID_URL = re.compile(r'^(?:http|ftp)s?://' # http:// or https://
 class UserInterface(Cmd):
     def __init__(self):
         super(UserInterface, self).__init__()
-        self.ennio_core = EnnIOCore()
+        self.ennio_core = EnnIOCore(os.path.dirname(os.path.realpath(__file__)))
         self.ennio_core.setup()
         self.prompt = 'ennIO> '
         self.intro = "Welcome to ennIO! Type ? to list commands"
@@ -50,9 +50,8 @@ class UserInterface(Cmd):
             return
 
         video_name, results = self.ennio_core.use_models(url, start_time_str=start_time)
-
         print("Suggestions for video: {}".format(video_name))
-        for index, file_path in results:
+        for index, file_path in results.items():
             print("{index}. {audio_path}".format(index=index,
                                                  audio_path=file_path))
 
@@ -110,7 +109,6 @@ class UserInterface(Cmd):
         start_time = None
         try:
             start_time = inputs[1]
-            print(start_time)
             if ":" not in start_time:
                 raise UserWarning("Not valid start-time format - Valid format MM:SS")
         except IndexError:

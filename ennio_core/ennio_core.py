@@ -446,7 +446,7 @@ class EnnIOCore(object, metaclass=Singleton):
         return video_df
 
     def create_dataframe_files(self):
-        audio_df, metadata_df, video_df = self._create_dataframes()
+        video_df, audio_df, metadata_df,  = self._create_dataframes()
 
         options_str = str(self._get_video_extractor_config()).replace(" ", "").replace("'", "").replace(":", "_")
         video_features_file = "video_features_df_{options}.pkl".format(options=options_str)
@@ -485,7 +485,7 @@ class EnnIOCore(object, metaclass=Singleton):
                                           columns=self._audio_feature_names)
         metadata_df = pd.DataFrame.from_dict(metadata, orient='index',
                                              columns=metadata_columns)
-        return audio_df, metadata_df, video_df
+        return video_df, audio_df, metadata_df
 
     def _get_video_features_for_single_file(self, url, start_time, end_time, mode="prediction"):
         """
@@ -565,7 +565,6 @@ class EnnIOCore(object, metaclass=Singleton):
 
         # Use model with evaluation parameter
         video_path, results_dict = self.use_models(url, start_time_str, mode='evaluation')
-
         vid_id = self._db_manager.get_evaluation_clip_by_path(video_path).clip_id
         # Join Video and suggested audio
         results = self._merge_results(video_path, results_dict)
