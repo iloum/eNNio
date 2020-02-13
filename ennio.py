@@ -195,6 +195,26 @@ class UserInterface(Cmd):
         self.ennio_core.update_evaluation_vote(video_id, num_to_model[int(user_preference)])
         print("Thanks! Try another?")
 
+    def do_predict(self, args):
+        """
+        Predict audio
+        Usage: predict <youtube-url> [<timestamp>]
+        Example: evaluate https://www.youtube.com/watch?v=CL5NeUZTzvw 0:15
+        """
+        try:
+            start_time, url = self._validate_url_start_time(args)
+        except UserWarning as warn:
+            print(warn)
+            return
+
+        exported_path = self.ennio_core.live_ennio(url, start_time_str=start_time)
+
+        print()
+        print("Playing selected number {}".format(exported_path))
+        print()
+        subprocess.run(['ffplay', '-autoexit', '-loglevel', 'quiet', exported_path])
+
+
 if __name__=='__main__':
     # try:
     ui = UserInterface()

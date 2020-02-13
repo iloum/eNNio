@@ -216,39 +216,33 @@ class EnnIOCore:
         except EnnIOException:
             return
 
-    def predict_audio_from_models(self, eval_dataframe, url, start_time):  #input_file):
+    def predict_audio_from_models(self, eval_dataframe, url, start_time_str):
         """
         Method to use the best model in order to predict a
         suitable music score. It assumes that the construct_model above has been called before
         in order to create the models ans store them in a list
         :return:
         """
-        # self.extract_features(input_file)
-        # import pickle
-        # import random
-        # video_path = "D:\\Programming\\DataScience\\MasterDS\\Multimodal\\SemesterProject\\ennIO\\data\\video_features_df_{ftlist_[lbps,hogs,colors,flow],width_300,step_3}.pkl"
-        # video_df = pickle.load(open(video_path, "rb"))
-        # video_df['model_winner'] = 0
-        # eval_dataframe = video_df.copy()
-
-
-
         self.construct_models()
 
-        new_vid_ftrs, video_path = self.get_video_features_for_prediction(url, start_time, start_time+20)
+        if start_time_str:
+            start_time = self._time_string_to_seconds(start_time_str)
+        else:
+            start_time = 0
 
+        new_vid_ftrs, video_path = self.get_video_features_for_single_file(url=url, start_time=start_time,
+                                                                           end_time=start_time + 20,
+                                                                           mode="prediction")
         predictions = self._ml_core.predict(new_vid_ftrs)
-        #print(new_vid_ftrs.shape)
-        #print(eval_dataframe.shape)
+
         best_model = mu.model_voter(new_vid_ftrs, eval_dataframe)
         model_prediction_clip_id = predictions[best_model]
 
         clip = self._db_manager.get_clip_by_id(model_prediction_clip_id)[-1]
         audio = self._db_manager.get_audio_by_id(clip.audio_from_clip)
 
-        print("Best model: {index}. {audio_id} {audio_path}".format(index=best_model,
-                                                            audio_id=clip.audio_from_clip,
-                                                            audio_path=audio.audio_path))
+        print("Best model: {index}. {audio_path}".format(index=best_model,
+                                                         audio_path=audio.audio_path))
         return audio.audio_path, video_path
 
     def download_video_from_url_file(self):
@@ -642,9 +636,6 @@ class EnnIOCore:
         :param start_time_str: starting time
         :return: the path of the combined video
         """
-        path = ""
-        #if any(i.isalpha() for i in start_time_str):
-        #    raise EnnIOException("start time must be just digits!")
         eval_df = self.create_evaluation_dataframe()
         audio_path, video_path = self.predict_audio_from_models(eval_df, url, start_time_str)
         export_path = os.path.join(self._video_live_merged, "Result.mp4")
