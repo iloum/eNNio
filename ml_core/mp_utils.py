@@ -64,12 +64,13 @@ def model_voter(new_video_ftrs, eval_video_results_df):
     neigh.fit(eval_video_ftrs, mdl_winners)
 
     video_new_nparray = new_video_ftrs.values
-    size = video_new_nparray.shape[0]
+    #print(video_new_nparray.shape)
+    size = video_new_nparray.shape[1]
     video_new_nparray_reshaped = video_new_nparray.reshape((1, size))
 
     knn_predict = neigh.predict(video_new_nparray_reshaped)
 
-    return knn_predict
+    return knn_predict[0]
 
 
 if __name__=='__main__':
