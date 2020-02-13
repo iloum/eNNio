@@ -1,14 +1,14 @@
-from keras.models import Sequential
-from keras.layers import Dense, Dropout
-from keras.optimizers import SGD, Adam, RMSprop
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout
+from tensorflow.keras.optimizers import SGD, Adam, RMSprop
 from ml_core.ml_model import MLModel
 from data_preprocessor import data_preprocessor as dp
-import tensorflow as tf
-from keras import regularizers
+from tensorflow.keras import regularizers
 from ml_core import mp_utils as mu
 from sklearn.neighbors import KNeighborsClassifier
 import pickle
 import os
+
 
 class ANN(MLModel):
     def __init__(self, name, batch_size, epochs, input_size, output_size):
