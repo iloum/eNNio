@@ -149,9 +149,10 @@ class EnnIOCore(object, metaclass=Singleton):
         paths = {}
         for index, audio_path in results.items():
             if index == -1:
-                new_name = "Random.mp4"
+                new_name = os.path.basename(video_path) + "_Random.mp4"
             else:
-                new_name = self._ml_core.get_model_name_from_index(index) + ".mp4"
+                new_name = os.path.basename(video_path) + "_"\
+                           + self._ml_core.get_model_name_from_index(index) + ".mp4"
             export_path = os.path.join(self._eval_merged_dir, new_name)
             self._audio_video_merge(audio_path, video_path, export_path)
             paths[index] = export_path
