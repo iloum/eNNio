@@ -1,4 +1,4 @@
-from tensorflow.keras.models import Sequential
+from tensorflow.keras.models import Sequential, model_from_json
 from tensorflow.keras.layers import Dense, Dropout
 from tensorflow.keras.optimizers import SGD, Adam, RMSprop
 from ml_core.ml_model import MLModel
@@ -12,27 +12,15 @@ import os
 
 
 class ANN(MLModel):
-    def __init__(self, name, batch_size, epochs, input_size, output_size):
+    def __init__(self, name, batch_size, epochs):
+        super().__init__(name)
+
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
         os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
         self.batch_size = batch_size
         self.epochs = epochs
-        self.model = Sequential()
-        self.input_size = input_size
-        self.output_size = output_size
-
-        self.model = Sequential()
-        self.model.add(Dense(200, activation='tanh', input_shape=(self.input_size,)))
-        self.model.add(Dense(200, activation='tanh', kernel_regularizer=regularizers.l2(0.0001)))
-        self.model.add(Dense(200, activation='tanh', kernel_regularizer=regularizers.l2(0.0001)))
-        self.model.add(Dense(100, activation='tanh', kernel_regularizer=regularizers.l2(0.0001)))
-        self.model.add(Dense(self.output_size, activation='tanh', kernel_regularizer=regularizers.l2(0.0001)))
-        self.model.summary()
-        self.model.compile(loss='mean_squared_error', optimizer=Adam())
-
-        super().__init__(name)
-        pass
+        self.model = None
 
     def train_ml_model(self, video_df, audio_df, m_df):
         '''
@@ -40,19 +28,57 @@ class ANN(MLModel):
         :param train_data: the data for training
         :return: the trained model
         '''
-
         proc_audio_df = dp.remove_beat_conf_column(audio_df)  # remove columns with None
-        video_data_scl, audio_data_scl, _, _ = dp.apply_minmax_scaler(video_df, proc_audio_df)
+        insize = video_df.shape[1]
+        outsize = proc_audio_df.shape[1]
+
+        self.model = Sequential()
+        self.model.add(Dense(200, activation='tanh',
+                             input_shape=(insize,)))
+        self.model.add(Dense(200, activation='tanh',
+                             kernel_regularizer=regularizers.l2(0.0001)))
+        self.model.add(Dense(200, activation='tanh',
+                             kernel_regularizer=regularizers.l2(0.0001)))
+        self.model.add(Dense(100, activation='tanh',
+                             kernel_regularizer=regularizers.l2(0.0001)))
+        self.model.add(Dense(outsize, activation='tanh',
+                             kernel_regularizer=regularizers.l2(0.0001)))
+        self.model.summary()
+        self.model.compile(loss='mean_squared_error', optimizer=Adam())
+
+        video_data_scl, audio_data_scl, _, _ = dp.apply_minmax_scaler(video_df,proc_audio_df)
 
         self.model.fit(video_data_scl, audio_data_scl,
                        batch_size=self.batch_size,
                        epochs=self.epochs,
                        verbose=1)
 
-        #pickle.dump(self.model, open(os.path.join(self._data_dir, self.name+".pkl"), "wb"))
-
-
         return self.model
+
+    def save_model(self, destination):
+        """
+        Method to save model
+        Args:
+            destination: Destination directory
+        """
+        model_json = self.model.to_json()
+        with open(os.path.join(destination, self.name + ".json"), "w") as json:
+            json.write(model_json)
+        self.model.save_weights(os.path.join(destination, self.name +
+                                             "_weights.h5"))
+
+    def load_model(self, source):
+        """
+        Method to load saved model
+        Args:
+            source: Source directory
+        """
+        json_file = open(os.path.join(source, self.name + ".json"), 'r')
+        loaded_model_json = json_file.read()
+        json_file.close()
+        self.model = model_from_json(loaded_model_json)
+        self.model.load_weights(os.path.join(source, self.name +
+                                             "_weights.h5"))
 
     def evaluate_ml_model(self, video_df, audio_df, metadata_df):
         '''
@@ -105,7 +131,3 @@ class ANN(MLModel):
         #print("predict:", metadata_df.loc[knn_predict, "Url"].values)
 
         return knn_predict.tolist()[-1]
-
-
-
-

@@ -11,6 +11,7 @@ class MLCore:
         :param mdl: the name of the model (string)
         '''
         self.available_models = ("ANN", "Classifier")
+        # self.available_models = ("Classifier",)
         self.models = {name : None for name in self.available_models}
         self.is_model_trained = {name : False for name in self.available_models}
         self.video_df = None
@@ -34,27 +35,23 @@ class MLCore:
             self._train_model(model_name)
 
     def create_model(self, model_name):
-        #If model exists do not overwrite it
+        # If model exists do not overwrite it
         if self.models[model_name]:
             return
 
-        #stored_models = fm.getfiledictionary(path=self.model_path)
-
-        # if model exist, load it
-        #if model_name in stored_models.keys():
-        #    self.models[model_name] = pickle.load(open(stored_models[model_name], "rb"))
-        #    self.is_model_trained[model_name] = True
-        #    return
-
         if model_name == "ANN":
-            _, insize = self.video_df.shape
-            _, outsize = self.audio_df.shape
-            self.models[model_name] = ANN(model_name, batch_size=64, epochs=100,
-                                          input_size=insize, output_size=outsize-1)
+            self.models[model_name] = ANN(model_name, batch_size=64, epochs=100)
         elif model_name == "Classifier":
             self.models[model_name] = Classifier(model_name)
 
-        self.is_model_trained[model_name] = False
+        # if model exist, load it
+        if model_name in os.listdir(self.model_path):
+            self.models[model_name].load_model(os.path.join(self.model_path,
+                                                            model_name))
+            print("Loaded model {}".format(model_name))
+            self.is_model_trained[model_name] = True
+        else:
+            self.is_model_trained[model_name] = False
 
     def _train_model(self, model_name):
         """
@@ -66,7 +63,7 @@ class MLCore:
             return
 
         self.models[model_name].train_ml_model(self.video_df, self.audio_df, self.meta_df)
-        # self._save_model(model_name)
+        self._save_model(model_name)
         self.is_model_trained[model_name] = True
 
     def evaluate_model(self):
@@ -101,6 +98,6 @@ class MLCore:
         :param model_name: Name of the file to save model to
         :return:
         """
-        pass
-        #pickle.dump(self.models[model_name], open(os.path.join(self.model_path, model_name), "wb"))
-
+        save_dir = os.path.join(self.model_path, model_name)
+        os.mkdir(save_dir)
+        self.models[model_name].save_model(save_dir)
