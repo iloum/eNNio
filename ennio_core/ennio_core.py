@@ -161,7 +161,11 @@ class EnnIOCore(object, metaclass=Singleton):
 
     @instance_lock
     def update_evaluation_vote(self,video_id, winner):
-        self._db_manager.update_voted_model(video_id, winner)
+        if winner != "Random":
+            for idx, name in enumerate(self._ml_core.available_models):
+                if name == winner:
+                    winner_idx = idx+1
+                    self._db_manager.update_voted_model(video_id, winner_idx)
 
     @instance_lock
     def use_models(self, url, start_time_str, mode="prediction"):  # input_file):
