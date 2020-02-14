@@ -545,14 +545,17 @@ class EnnIOCore(object, metaclass=Singleton):
         size = video_features.shape[0]
         video_features_reshaped = video_features.reshape((1, size))
 
-        if mode == "evaluation" and not self._db_manager.evaluation_video_exists(video_stream_id):
-            self._db_manager.add_evaluation_clip(clip_id=video_stream_id,
-                                                 url=url,
-                                                 start_time=start_time,
-                                                 end_time=end_time,
-                                                 clip_path=video_file_path,
-                                                 clip_title=video_stream_name,
-                                                 video_features=video_features)
+        if mode == "evaluation":
+            if not self._db_manager.evaluation_video_exists(video_stream_id):
+                self._db_manager.add_evaluation_clip(clip_id=video_stream_id,
+                                                     url=url,
+                                                     start_time=start_time,
+                                                     end_time=end_time,
+                                                     clip_path=video_file_path,
+                                                     clip_title=video_stream_name,
+                                                     video_features=video_features)
+            else:
+                raise VideoAlreadyExist("Evaluation already exists for this video")
 
 
         video_df = pd.DataFrame(video_features_reshaped, columns=video_feature_names)
