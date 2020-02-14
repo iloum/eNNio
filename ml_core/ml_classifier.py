@@ -1,6 +1,8 @@
 import random
 from math import sqrt
 import numpy as np
+import os
+import pickle
 from ml_core.mp_utils import my_train_test_split
 from ml_core.ml_model import MLModel
 from data_preprocessor import data_preprocessor as dp
@@ -17,7 +19,6 @@ class Classifier(MLModel):
         self._video_reducer = None
         self._audio_reducer = None
         self._trans_audio_df = None
-
 
     @staticmethod
     def _create_not_matching_entries(num_of_entries, metadata):
@@ -65,6 +66,46 @@ class Classifier(MLModel):
 
         return self.model
 
+    def save_model(self, destination):
+        """
+        Method to save model
+        Args:
+            destination: Destination directory
+        """
+        pickle.dump(self.model,
+                    open(os.path.join(destination,
+                                      self.name + '_model.pkl'), "wb"))
+        pickle.dump(self._video_normalizer,
+                    open(os.path.join(destination,
+                                      self.name + '_vnorm.pkl'), "wb"))
+        pickle.dump(self._audio_normalizer,
+                    open(os.path.join(destination,
+                                      self.name + '_anorm.pkl'), "wb"))
+        pickle.dump(self._video_reducer,
+                    open(os.path.join(destination,
+                                      self.name + '_vreduce.pkl'), "wb"))
+        pickle.dump(self._audio_reducer,
+                    open(os.path.join(destination,
+                                      self.name + '_areduce.pkl'), "wb"))
+
+    def load_model(self, source):
+        """
+        Method to load saved model
+        Args:
+            source: Source directory
+        """
+        self.model = pickle.load(
+            open(os.path.join(source, self.name + '_model.pkl'), "rb"))
+        self._video_normalizer = pickle.load(
+            open(os.path.join(source, self.name + '_vnorm.pkl'), "rb"))
+        self._audio_normalizer = pickle.load(
+            open(os.path.join(source, self.name + '_anorm.pkl'), "rb"))
+        self._video_reducer = pickle.load(
+            open(os.path.join(source, self.name + '_vreduce.pkl'), "rb"))
+        self._audio_reducer = pickle.load(
+            open(os.path.join(source, self.name + '_areduce.pkl'), "rb"))
+
+
     def evaluate_ml_model(self, video_df, audio_df, metadata_df):
         """
         Method to evaluate the model based on test data
@@ -90,15 +131,19 @@ class Classifier(MLModel):
         trans_video_new = self._video_reducer.transform(norm_video_new)
 
         suggestions = []
+        proc_audio_df = dp.remove_beat_conf_column(audio_df)  # remove columns with None
 
-        for audio in self._trans_audio_df.iterrows():
-            x = np.hstack((trans_video_new,
-                           audio[1].values.reshape(1, len(audio[1]))))
+        for index, audio in proc_audio_df.iterrows():
+            norm_audio_new = self._audio_normalizer.transform(
+                audio.values.reshape(1, len(audio)))
+
+            trans_audio_new = self._audio_reducer.transform(norm_audio_new)
+            x = np.hstack((trans_video_new, trans_audio_new))
 
             probs = self.model.predict_proba(x).ravel().tolist()
             max_prob = max(probs)
             if probs.index(max_prob) == 1:
-                suggestions.append((audio[0], max_prob))
+                suggestions.append((index, max_prob))
 
         return sorted(suggestions, key=lambda t: t[1])[0][0]
 
