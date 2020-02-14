@@ -8,12 +8,14 @@ import random
 def instance_lock(func):
     @functools.wraps(func)
     def wrapper_lock(*args, **kwargs):
-        print("Asking for lock by {}".format(func.__name__))
+        #print("Asking for lock by {}".format(func.__name__))
         InstanceLock().acquire_instance_lock()
-        print("Lock acquired by {}".format(func.__name__))
-        value = func(*args, **kwargs)
-        InstanceLock().release_instance_lock()
-        print("Lock released by {}".format(func.__name__))
+        #print("Lock acquired by {}".format(func.__name__))
+        try:
+            value = func(*args, **kwargs)
+        finally:
+            InstanceLock().release_instance_lock()
+            #print("Lock released by {}".format(func.__name__))
         return value
     return wrapper_lock
 
