@@ -2,6 +2,7 @@ import os
 import time
 import functools
 from utilities.singleton import Singleton
+import random
 
 
 def instance_lock(func):
@@ -30,7 +31,7 @@ class InstanceLock(object, metaclass=Singleton):
         Tries to acquire instance lock by polling the lock file
         """
         while os.path.isfile(self.file):
-            time.sleep(1)
+            time.sleep(random.randrange(1, 3))
 
         self.fd = os.open(self.file, os.O_CREAT | os.O_EXCL)
 
