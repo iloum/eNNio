@@ -48,23 +48,41 @@ def results(request):
         #path4 = "_1_11_12_Movie_CLIP_-_Showdown_at_the_House_of_Blue_Leaves_2003_HD-id_EajaioMj-NA-specs_256x144_24-from_80-to_100.mp4"
         data = {
             'error': False,
-            'url': 'display?variable1='+path1+'&variable2='+path2+'&variable3='+path3#+'&variable4='+path4
+            'url': 'display?videoid='+video_id+'&variable1='+path1+'&variable2='+path2+'&variable3='+path3#+'&variable4='+path4
         }
         return JsonResponse(data)
 
-
+@csrf_exempt
 def display(request):
     path1 = request.GET.get('variable1', None)
     path2 = request.GET.get('variable2', None)
     path3 = request.GET.get('variable3', None)
     path4 = request.GET.get('variable4', None)
+    video_id = request.GET.get('videoid', None)
     return render(request, 'web_evaluator/results.html',
                   {'title': 'Display',
                    'path1': path1,
                    'path2': path2,
                    'path3': path3,
-                   'path4': path4})
+                   'path4': path4,
+                   'videoid': video_id})
+
+@csrf_exempt
+def vote(request):
+    video_id = request.POST.get('videoid', None)
+    path = request.POST.get('path', None)
+    model = path.partition('merged/')[2].strip('.mp4')
+    #ennio.update_winner(video_id=video_id, winner_model=path)
+    data = {
+        'error': False,
+        'url': 'thanks?videoid=' + video_id + '&model=' + model
+    }
+    return JsonResponse(data)
 
 
-def wait(request):
-    return render(request, 'web_evaluator/wait.html', {'title': 'Please Wait...'})
+def thanks(request):
+    video_id = request.GET.get('videoid', None)
+    model = request.GET.get('model', None)
+    return render(request, 'web_evaluator/thanks.html', {'title': 'Thank you...',
+                                                         'video': video_id,
+                                                         'model': model})

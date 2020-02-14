@@ -1,0 +1,21 @@
+{% extends "web_evaluator/base.html" %}
+{% block content %}
+{% load static %}
+<body style="background-image: url({% static 'web_core/demokritos.jpeg'%}),
+                              url('https://s3.amazonaws.com/zweb-s3.assets/wp-content/uploads/2018/11/Morricone-Ennio-composing-Nov18-1024x575.jpg');
+            background-position: left top, top;
+            background-repeat: no-repeat, repeat;">
+<div class="w3-panel w3-white w3-section w3-round-xxlarge w3-margin w3-center" style="width:60%;">
+
+        <h1>Thanks for helping ennIO make his bread. </h1>
+        <p>You actually chose scoring with {{model}}. We really hope you enjoyed it, and we appreciate the help.
+            But if you REALLY want to help, why not try again?
+        </p>
+        <a class="next" href={% url 'evaluator-input'%}> Sure, I want you to graduate! &raquo;</a>
+        <a class="next" href={% url 'core-home'%}> Perhaps I'll just use the platform this time &raquo;</a>
+    </p>
+</div>
+</body>
+</html>
+{% endblock content%}
+
