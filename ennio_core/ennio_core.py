@@ -182,7 +182,8 @@ class EnnIOCore(object, metaclass=Singleton):
             start_time = self._time_string_to_seconds(start_time_str)
         else:
             start_time = 0
-
+        print(type(start_time))
+        print(start_time)
         new_vid_ftrs, video_path = self._get_video_features_for_single_file(url=url, start_time=start_time,
                                                                             end_time=start_time + 20, mode=mode)
 
@@ -241,7 +242,7 @@ class EnnIOCore(object, metaclass=Singleton):
         :return:
         """
         self._construct_models()
-
+        print(os.popen('which youtube-dl').read())
         if start_time_str:
             start_time = self._time_string_to_seconds(start_time_str)
         else:
@@ -513,7 +514,7 @@ class EnnIOCore(object, metaclass=Singleton):
         :param url: Video url
         :return:
         """
-
+        print(os.popen('which youtube-dl').read())
         available_cpus = multiprocessing.cpu_count()
         if available_cpus > 1:
             available_cpus -= 1
