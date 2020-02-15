@@ -1,5 +1,6 @@
-{% extends "web_evaluator/base.html" %}
+{% extends "web_core/base.html" %}
 {% block content %}
+<body>
 <form id="url_form" class="decor" action="results/" method="post">
     <div class="form-left-decoration"></div>
     <div class="form-right-decoration"></div>
@@ -8,9 +9,11 @@
         <h1>Please input your URL</h1>
         <input name="url_input" type="url" placeholder="Youtube URL">
         <input name="timestamp_input" type="text" placeholder="Start Timestamp 'min:sec'">
+        <p>This might take a few seconds, so don't get impatient. ennIO is great, but he's also an old man...</p>
         <button id="submit_button" type="submit">Submit</button>
     </div>
 </form>
+</body>
 {% endblock content%}
 {% block js %}
 <script>
@@ -43,5 +46,6 @@ $(document).ready(function(){
 
 
 });
+
 </script>
 {% endblock js %}

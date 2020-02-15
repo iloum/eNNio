@@ -1,5 +1,7 @@
 {% extends "web_evaluator/base.html" %}
 {% block content %}
+{% load static %}
+<body style="background-image:none;">
 <div class="w3-row-padding w3-section w3-hide-medium">
     <div class="w3-col w3-half">
         <video controls width="100%">
@@ -46,7 +48,7 @@
         </button>
     </div>
 </div>
-
+</body>
 {% endblock content%}
 {% block js %}
 <script>
@@ -70,39 +72,8 @@ $.ajax({
     alert("success" + response);
     window.location.href = response.url;
     })
-.fail(function(data) {
-    alert("failure" + data);
-    });
 }
 
-
-/*
-$(document).ready(function(){
-        $("button").click(function() {
-            var model_path = $(this).val().path();
-            var video_id = $(this).val().videoId();
-            alert(model_path);
-        });
-
-        console.log(post_url);
-        console.log(request_method);
-        console.log(form_data);
-
-        $.ajax({
-            url : post_url,
-            type: request_method,
-            data : form_data
-        }).done(function(response){
-            console.log(response.error)
-            if(response.error == true){
-                alert(response.error_prompt);
-            } else {
-                alert(response.url);
-                window.location.href = response.url;
-            }
-        });
-    });
-});*/
 
 </script>
 {% endblock js %}

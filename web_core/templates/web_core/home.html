@@ -1,8 +1,10 @@
-{% extends "web_evaluator/base.html" %}
+{% extends "web_core/base.html" %}
 {% block content %}
-
-
-<body>
+{% load static %}
+<body style="background-image: url({% static 'web_core/demokritos.jpeg'%}), url({% static 'web_core/unipel.jpeg'%}),
+                              url('https://s3.amazonaws.com/zweb-s3.assets/wp-content/uploads/2018/11/Morricone-Ennio-composing-Nov18-1024x575.jpg');
+            background-position: left top, right top, top;
+            background-repeat: no-repeat, no-repeat, repeat;">
 
 <div class="w3-panel w3-white w3-section w3-round-xxlarge w3-margin" style="width:60%;">
     <h1>Welcome to ennIO!</h1>

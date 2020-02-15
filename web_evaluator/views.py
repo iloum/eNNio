@@ -72,7 +72,7 @@ def vote(request):
     video_id = request.POST.get('videoid', None)
     path = request.POST.get('path', None)
     model = path.partition('merged/')[2].strip('.mp4')
-    #ennio.update_winner(video_id=video_id, winner_model=path)
+    ennio.update_evaluation_vote(video_id=video_id, winner=path)
     data = {
         'error': False,
         'url': 'thanks?videoid=' + video_id + '&model=' + model

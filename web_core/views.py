@@ -35,11 +35,11 @@ def results(request):
         }
         return JsonResponse(data)
     else:
-        #path = ennio.live_ennio(url=url_input, start_time_str=timestamp_input)
-        #path = path.partition("data/")[2]
+        path = ennio.live_ennio(url=url_input, start_time_str=timestamp_input)
+        path = path.partition("data/")[2]
 
         # temp paths for debugging
-        path = "live/parsed/video/title_THE_2NIGHT_SHOW_-_--id_dYyBvUZ2ZxA-specs_256x144_25-from_0-to_20.mp4"
+        #path = "live/parsed/video/title_THE_2NIGHT_SHOW_-_--id_dYyBvUZ2ZxA-specs_256x144_25-from_0-to_20.mp4"
         data = {
             'error': False,
             'url': 'display?variable1='+path
@@ -52,3 +52,8 @@ def display(request):
     return render(request, 'web_core/results.html',
                   {'title': 'Display',
                    'path1': path1})
+
+
+def about(request):
+    return render(request, 'web_core/about.html',
+                  {'title': 'About'})
