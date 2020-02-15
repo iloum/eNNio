@@ -1,6 +1,7 @@
 import pickle
 from ml_core.ml_ANN import ANN
 from ml_core.ml_classifier import Classifier
+from ml_core.ml_TSNE import TSNE
 from utilities import file_management as fm
 import os
 
@@ -10,7 +11,7 @@ class MLCore:
         Constructor
         :param mdl: the name of the model (string)
         '''
-        self.available_models = ("ANN", "Classifier")
+        self.available_models = ("ANN", "Classifier","TSNE")
         # self.available_models = ("Classifier",)
         self.models = {name : None for name in self.available_models}
         self.is_model_trained = {name : False for name in self.available_models}
@@ -43,6 +44,8 @@ class MLCore:
             self.models[model_name] = ANN(model_name, batch_size=64, epochs=100)
         elif model_name == "Classifier":
             self.models[model_name] = Classifier(model_name)
+        elif model_name == "TSNE":
+            self.models[model_name] = TSNE(model_name)
 
         # if model exist, load it
         if model_name in os.listdir(self.model_path):
@@ -83,10 +86,17 @@ class MLCore:
         """
         predictions = {}
         for index, model_name in enumerate(self.available_models):
-            predictions[index] = self.models[model_name].predict_ml_model(self.video_df,
-                                                                          self.audio_df,
-                                                                          self.meta_df,
-                                                                          new_video_ftrs)
+            if model_name != "TSNE":
+                predictions[index] = self.models[model_name].predict_ml_model(self.video_df,
+                                                                            self.audio_df,
+                                                                            self.meta_df,
+                                                                            new_video_ftrs)
+            else:
+                predictions[index] = self.models[model_name].predict_ml_model(self.video_df,
+                                                                        self.audio_df,
+                                                                        self.meta_df,
+                                                                        new_video_ftrs,
+                                                                        new_video_path)                                                 
         return predictions
 
     def get_model_name_from_index(self,idx):
