@@ -128,7 +128,7 @@ class UserEvaluation(Base):
                  clip_path="",
                  video_features="",
                  audio_id="",
-                 voted_model=0):
+                 voted_model=""):
         self.clip_id = clip_id
         self.clip_title = clip_title
         self.url = url

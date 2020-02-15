@@ -164,7 +164,7 @@ class EnnIOCore(object, metaclass=Singleton):
         if winner != "Random":
             for idx, name in enumerate(self._ml_core.available_models):
                 if name == winner:
-                    winner_idx = idx+1
+                    winner_idx = idx
                     self._db_manager.update_voted_model(video_id, winner_idx)
 
     @instance_lock
