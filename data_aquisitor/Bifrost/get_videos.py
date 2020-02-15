@@ -62,7 +62,6 @@ def main(args):
         parsed_item={}
         parsed_item['link']=rawitem['link']
         parsed_item['specs']={}
-        #parsed_item['comment']=rawitem["comment"]
 
         if rawitem.get('res') or rawitem.get('fps') or rawitem.get('abr'):
         #if at least one is provided then update the rest with dummies
@@ -88,7 +87,7 @@ def main(args):
             
             persisted_item = persisted_meta[parsed_item['link']]
            
-            if compareflat_dict(parsed_item['specs'],persisted_item['specs']) and persisted_item['filenames']:
+            if compareflat_dict(parsed_item['specs'],persisted_item['specs']):
                 skip_download=True
                 
                 if compare_lists(parsed_item["timestamps"],persisted_item['timestamps']):
@@ -104,16 +103,6 @@ def main(args):
             new_entry=True
             skip_download=False
             skip_parsing=False
-
-
-        if new_entry:
-                persisted_meta[parsed_item['link']]={
-                "link":parsed_item['link'],
-                'specs':parsed_item['specs'],
-                'filenames':[],
-                'timestamps':[]
-                #'comments':parsed_item['comment']
-                } 
 
         if skip_download or skip_parsing:
             print("found an item registered using the same link")
@@ -163,33 +152,22 @@ def main(args):
             parsed_item['filenames']={"downloaded_audio":filename_audio,"downloaded_video":filename_video,
             "parsed_video":parsed_video_filenames,"parsed_audio":parsed_audio_filenames}
             
-
             if new_entry:
                 persisted_meta[parsed_item['link']]={
                 "link":parsed_item['link'],
                 'specs':parsed_item['specs'],
                 'filenames':parsed_item['filenames'],
-                'timestamps':[parsed_item['timestamps']]
-                #'comments':parsed_item['comment']
+                'timestamps':parsed_item['timestamps']
                 } 
             else:
                 
                 persisted_meta[parsed_item['link']]['filenames']['downloaded_video']=filename_video
                 persisted_meta[parsed_item['link']]['filenames']['downloaded_audio']=filename_audio
 
-                timestamps_found=[compare_lists(parsed_item['timestamps'], item) for item in persisted_meta[parsed_item['link']]['timestamps']]
-                print(timestamps_found)
-                print(parsed_item['timestamps'])
-                print(persisted_meta[parsed_item['link']]['timestamps'])
-                if any(timestamps_found):
-                    pass
-                else:
-                    persisted_meta[parsed_item['link']]['timestamps'].append(parsed_item['timestamps'])
+                persisted_meta[parsed_item['link']]['timestamps'].extend(parsed_item['timestamps'])
 
-                if parsed_video_filenames not in persisted_meta[parsed_item['link']]['filenames']['parsed_video']:
-                    persisted_meta[parsed_item['link']]['filenames']['parsed_video'].extend(parsed_video_filenames)
-                if parsed_audio_filenames not in persisted_meta[parsed_item['link']]['filenames']['parsed_audio']:
-                    persisted_meta[parsed_item['link']]['filenames']['parsed_audio'].extend(parsed_audio_filenames)
+                persisted_meta[parsed_item['link']]['filenames']['parsed_video'].extend(parsed_video_filenames)
+                persisted_meta[parsed_item['link']]['filenames']['parsed_audio'].extend(parsed_audio_filenames)
 
                 #persisted_meta[parsed_item['link']]['filenames']['comments'].extend(parsed_item["comment"])
         
