@@ -48,7 +48,7 @@ def results(request):
         path1 = paths[0].partition("data/")[2]
         path2 = paths[1].partition("data/")[2]
         path3 = paths[-1].partition("data/")[2]
-        #path4 = paths[3]
+        path4 = paths[2].partition("data/")[2]
         # temp paths for debugging
         #path1 = "_1_11_12_Movie_CLIP_-_Showdown_at_the_House_of_Blue_Leaves_2003_HD-id_EajaioMj-NA-specs_256x144_24-from_80-to_100.mp4"
         #path2 = "_1_11_12_Movie_CLIP_-_Showdown_at_the_House_of_Blue_Leaves_2003_HD-id_EajaioMj-NA-specs_256x144_24-from_80-to_100.mp4"
@@ -56,7 +56,7 @@ def results(request):
         #path4 = "_1_11_12_Movie_CLIP_-_Showdown_at_the_House_of_Blue_Leaves_2003_HD-id_EajaioMj-NA-specs_256x144_24-from_80-to_100.mp4"
         data = {
             'error': False,
-            'url': 'display?videoid='+video_id+'&variable1='+path1+'&variable2='+path2+'&variable3='+path3#+'&variable4='+path4
+            'url': 'display?videoid='+video_id+'&variable1='+path1+'&variable2='+path2+'&variable3='+path3+'&variable4='+path4
         }
         return JsonResponse(data)
 
@@ -79,7 +79,7 @@ def display(request):
 def vote(request):
     video_id = request.POST.get('videoid', None)
     path = request.POST.get('path', None)
-    model = path.partition('merged/')[2].strip('.mp4')
+    model = path.partition('merged/')[2].partition('.mp4')[2].strip('.mp4')
     ennio.update_evaluation_vote(video_id=video_id, winner=path)
     data = {
         'error': False,
