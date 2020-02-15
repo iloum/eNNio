@@ -6,6 +6,7 @@ from time import time
 from cmd import Cmd
 from ennio_core.ennio_core import EnnIOCore
 import subprocess
+from ennio_exceptions import EnnIOException
 
 VALID_URL = re.compile(r'^(?:http|ftp)s?://' # http:// or https://
                        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|' #domain...
@@ -176,7 +177,11 @@ class UserInterface(Cmd):
         except UserWarning as warn:
             print(warn)
             return
-        video_id, results = self.ennio_core.evaluation_mode(url, start_time_str=start_time)
+        try:
+            video_id, results = self.ennio_core.evaluation_mode(url, start_time_str=start_time)
+        except EnnIOException as e:
+            print(e)
+            return
 
         num_to_model = {}
         for num, (model, exported_path) in enumerate(results.items(), start=1):

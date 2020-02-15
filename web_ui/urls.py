@@ -16,6 +16,8 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from django.conf.urls.static import static
+from ennio_core.ennio_core import EnnIOCore
+import os
 
 from web_ui import settings
 
@@ -24,3 +26,5 @@ urlpatterns = [
     path('', include('web_core.urls')),
     path('evaluator/', include('web_evaluator.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+EnnIOCore(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))).setup()
