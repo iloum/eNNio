@@ -3,7 +3,7 @@ from django.http import HttpResponse
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from ennio_core.ennio_core import EnnIOCore
-from ennio_exceptions import VideoAlreadyExist
+from ennio_exceptions import EnnIOException
 import re
 
 RE_YOUTUBE_URL = re.compile("^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$")
@@ -36,7 +36,15 @@ def results(request):
         }
         return JsonResponse(data)
     else:
-        video_id, paths = ennio.evaluation_mode(url=url_input, start_time_str=timestamp_input)
+        try:
+            video_id, paths = ennio.evaluation_mode(url=url_input, start_time_str=timestamp_input)
+        except EnnIOException as e:
+            data = {
+                'error': True,
+                'error_prompt': str(e),
+            }
+            return JsonResponse(data)
+
         path1 = paths[0].partition("data/")[2]
         path2 = paths[1].partition("data/")[2]
         path3 = paths[-1].partition("data/")[2]

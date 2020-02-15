@@ -515,6 +515,8 @@ class EnnIOCore(object, metaclass=Singleton):
         :return:
         """
         print(os.popen('which youtube-dl').read())
+        print(os.popen('which python').read())
+
         available_cpus = multiprocessing.cpu_count()
         if available_cpus > 1:
             available_cpus -= 1
@@ -530,7 +532,7 @@ class EnnIOCore(object, metaclass=Singleton):
                                                       threads=available_cpus)
 
         if not temp:
-            raise EnnIOException
+            raise EnnIOException("Download from youtube failed")
         metadata = temp[-1]
         video_stream_name = os.path.basename(metadata['filenames'][
                                                  'parsed_video'][-1])
