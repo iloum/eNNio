@@ -1,0 +1,69 @@
+{% extends "web_evaluator/base.html" %}
+{% block content %}
+{% load static %}
+<body>
+<div class="w3-container w3-white w3-section w3-round-xxlarge w3-margin" style="width:70%; height:80%">
+    <h1 class="w3-center">
+        ennIO: A modular multimodal soundtrack recommender system
+    </h1>
+    <h2 class="w3-center">
+        Created by Konstantinos Gyftakis, Ioannis Loumiotis, Nikolaos Nikolaou, Spiridon Spiliopoulos &
+        Georgios Touros
+    </h2>
+    <h3 class="w3-center">
+        for the "Multimodal Analysis" course for the MSc program on Data Science taught by
+        Theodore Yannakopoulos
+
+    </h3>
+    <p>We designed ennIO as a modular multi-modal video score recommender system, based on multiple classification
+        methods working in parallel, and a meta-voter that chooses the best available recommender based on user
+        feedback.
+    </p>
+    <p>The system is trained on 1000 20-second snippets from films and television series, in which music has great
+        prominence. The selection of these clips was manual, making sure that they were available on YouTube and free to
+        use, at least at the time of initial collection, and that they had enough diversity in genres, visual and audio
+        styles. The collection is done using a scraping module that utilises ffmpeg and YouTube’s API.
+        Features were extracted both for audio and video and stored in a database, along with some basic metadata on the
+        clip’s origins. The feature extraction is based on the opencv and pyAudioAnalysis libraries</p>
+    <p>For the recommendation process, we utilised multiple approaches, some of which utilise their own features, and
+        follow alternative methods on handling them:
+    </p>
+    <ul>
+        <li>One approach uses a feedforward neural network that takes the video features as input and predicts the
+            audio features. This prediction is then passed through a knn classifier that identifies the closest audio
+            clip to the predicted audio features and recommends it to the user.
+        </li>
+        <li>One approach combines audio and visual features and predicts a binary classifier with 2 classes (“match”,
+            “no match”). This SVM classifier is trained both in positive and negative examples, created by scrambling
+            the audio and video clips of the training set (making sure that the scrambling matches clips of disparate
+            genres and styles). The trained model then predicts the best matching video by combining the unseen video
+            features with the features of all the available audio clips.
+        </li>
+        <li>
+            One approach applies a pre-trained shot detection algorithm as well as a pre-trained emotion detection
+            algorithm, to create more informative visual features and then compares the unseen video with those features
+            and returns the audio clip of the nearest neighbor to the most similar video.
+        </li>
+    </ul>
+    <p>
+        In order to evaluate these models, as each produces quite different recommendations, we decided to build a
+        meta-voter, that would utilise information from real user feedback. To this end, we built a web-based
+        environment, using the Django Python framework for the backend, and html5, javascript and css for the frontend
+        elements, which is split into 2 basic environments:
+    </p>
+    <ul>
+        <li>The evaluation mode, where the user gets to input a video URL and ennIO produces four videos blending audio
+            files from the database. Each of these videos is created using one of the machine learning modules that have
+            been trained in parallel, as well as a video produced from a random audio file selection from the database.
+            The user then gets to choose which one is better, and we store this information for later use.
+        </li>
+        <li>
+            The core usage mode, where the user gets to input a video URL and ennIO produces a single video blending it
+            with a recommended audio file from the dataset. The audio file is chosen by the model that has given better
+            results on similar videos, based on the evaluation dataset created in the previous step.
+
+        </li>
+    </ul>
+</div>
+</body>
+{% endblock content%}

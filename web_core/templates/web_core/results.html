@@ -1,89 +1,18 @@
-{% extends "web_evaluator/base.html" %}
+{% extends "web_core/base.html" %}
 {% block content %}
-<div class="w3-row-padding w3-section w3-hide-medium">
-    <div class="w3-col w3-half">
+<div class="w3-row-padding w3-section">
+    <div class="w3-center">
         <video controls width="100%">
-            <source src="{{ MEDIA_URL }}{{var1}}" type="video/mp4">
+            <source src="{{ MEDIA_URL }}{{path1}}" type="video/mp4">
             <p>Your browser doesn't support HTML video.</p>
         </video>
-        <div class="w3-center">
-            <button class="w3-button w3-green w3-margin" style="width:30%">Cast vote!</button>
+        <div class="w3-half">
+            <button class="w3-button w3-green w3-margin" style="width:30%">Like!</button>
         </div>
-    </div>
-    <div class="w3-col w3-half">
-        <video controls width="100%">
-            <source src="{{ MEDIA_URL }}{{var1}}" type="video/mp4">
-            <p>Your browser doesn't support HTML video.</p>
-        </video>
-        <div class="w3-center">
-            <button class="w3-button w3-green w3-margin" style="width:30%">Cast vote!</button>
-        </div>
-    </div>
-    <div class="w3-col w3-half">
-        <video controls width="100%">
-            <source src="{{ MEDIA_URL }}{{var1}}" type="video/mp4">
-            <p>Your browser doesn't support HTML video.</p>
-        </video>
-        <div class="w3-center">
-            <button class="w3-button w3-green w3-margin" style="width:30%">Cast vote!</button>
-        </div>
-    </div>
-    <div class="w3-col w3-half">
-        <video controls width="100%">
-            <source src="{{ MEDIA_URL }}{{var1}}" type="video/mp4">
-            <p>Your browser doesn't support HTML video.</p>
-        </video>
-        <div class="w3-center">
-            <button class="w3-button w3-green w3-margin" style="width:30%">Cast vote!</button>
+        <div class="w3-half">
+            <button class="w3-button w3-red w3-margin" style="width:30%">Dislike!</button>
         </div>
     </div>
 </div>
 
-
-<!--<div class="w3-row">
-    <div class="w3-card-4 w3-margin w3-mobile w3-quarter" style="width:25%">
-        <div class="w3-container w3-center">
-            <video controls width="350" height="350">
-                <source src="{{ MEDIA_URL }}{{var1}}" type="video/mp4">
-                <p>Your browser doesn't support HTML video.</p>
-            </video>
-        </div>
-        <div class="w3-container w3-center w3-margin">
-            <button class="w3-button w3-green">Cast vote!</button>
-        </div>
-    </div>
-    <div class="w3-card-4 w3-quarter w3-margin w3-mobile w3-cell" style="width:25%">
-        <div class="w3-container w3-center">
-            <video controls width="350" height="350">
-                <source src="{{ MEDIA_URL }}{{var1}}" type="video/mp4">
-                <p>Your browser doesn't support HTML video.</p>
-            </video>
-        </div>
-        <div class="w3-container w3-center w3-margin">
-            <button class="w3-button w3-green">Cast vote!</button>
-        </div>
-    </div>
-    <div class="w3-card-4 w3-quarter w3-margin w3-mobile w3-cell" style="width:25%">
-        <div class="w3-container w3-center">
-            <video controls width="350" height="350">
-                <source src="{{ MEDIA_URL }}{{var1}}" type="video/mp4">
-                <p>Your browser doesn't support HTML video.</p>
-            </video>
-        </div>
-        <div class="w3-container w3-center w3-margin">
-            <button class="w3-button w3-green">Cast vote!</button>
-        </div>
-    </div>
-    <div class="w3-card-4 w3-quarter w3-margin w3-mobile w3-cell" style="width:25%">
-        <div class="w3-container w3-center">
-            <video controls width="350" height="350">
-                <source src="{{ MEDIA_URL }}{{var1}}" type="video/mp4">
-                <p>Your browser doesn't support HTML video.</p>
-            </video>
-        </div>
-        <div class="w3-container w3-center w3-margin">
-            <button class="w3-button w3-green">Cast vote!</button>
-        </div>
-    </div>
-</div>-->
 {% endblock content%}

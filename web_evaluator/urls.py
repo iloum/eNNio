@@ -9,5 +9,6 @@ urlpatterns = [
     path('input/', views.user_input, name='evaluator-input'),
     path('input/results/', views.results, name='evaluator-results'),
     path('input/display/', views.display, name='evaluator-disp'),
-    path('wait/', views.wait, name='wait')
+    path('input/display/vote/', views.vote, name='evaluator-vote'),
+    path('input/display/thanks', views.thanks, name='evaluator-thanks')
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

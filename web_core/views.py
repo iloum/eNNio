@@ -2,7 +2,12 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from ennio_core.ennio_core import EnnIOCore
 import re
+
+RE_YOUTUBE_URL = re.compile("^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$")
+RE_TIMESTAMP = re.compile("\d{2}:\d{2}")
+ennio = EnnIOCore()
 
 # Create your views here.
 def home(request):
@@ -30,15 +35,25 @@ def results(request):
         }
         return JsonResponse(data)
     else:
-        videopath1 = "_1_11_12_Movie_CLIP_-_Showdown_at_the_House_of_Blue_Leaves_2003_HD-id_EajaioMj-NA-specs_256x144_24-from_80-to_100.mp4"
+        path = ennio.live_ennio(url=url_input, start_time_str=timestamp_input)
+        path = path.partition("data/")[2]
+
+        # temp paths for debugging
+        #path = "live/parsed/video/title_THE_2NIGHT_SHOW_-_--id_dYyBvUZ2ZxA-specs_256x144_25-from_0-to_20.mp4"
         data = {
             'error': False,
-            'url': 'display?variable1='+videopath1+'&variable2=2',
+            'url': 'display?variable1='+path
         }
         return JsonResponse(data)
 
 
 def display(request):
-    var1 = request.GET.get('variable1', None)
-    var2 = request.GET.get('variable2', None)
-    return render(request, 'web_evaluator/results.html', {'title': 'Display', 'var1': var1, 'var2': var2})
+    path1 = request.GET.get('variable1', None)
+    return render(request, 'web_core/results.html',
+                  {'title': 'Display',
+                   'path1': path1})
+
+
+def about(request):
+    return render(request, 'web_core/about.html',
+                  {'title': 'About'})

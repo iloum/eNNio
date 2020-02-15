@@ -16,19 +16,13 @@ from functools import reduce
 from ml_core.ml_core import MLCore
 import ml_core.mp_utils as mu
 from utilities.singleton import Singleton
-
-
-VALID_URL = re.compile(r'^(?:http|ftp)s?://'  # http:// or https://
-                       r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
-                       r'localhost|'  # localhost...
-                       r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
-                       r'(?::\d+)?'  # optional port
-                       r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+from utilities.instance_lock import instance_lock, InstanceLock
 
 
 class EnnIOCore(object, metaclass=Singleton):
     def __init__(self, project_root='.'):
         self._project_root = project_root
+        InstanceLock(path=project_root)
         self._config_manager = ConfigManager(path=project_root)
         self._data_aquisitor = DataAquisitor()
         self._db_manager = DbManager()
@@ -51,6 +45,7 @@ class EnnIOCore(object, metaclass=Singleton):
         self._eval_video_stream_dir = None
         self._video_live_merged = None
 
+    @instance_lock
     def setup(self):
         self._config_manager.read_config()
         self._data_dir = os.path.join(self._project_root, self._config_manager.get_field('data-folder'))
@@ -112,12 +107,22 @@ class EnnIOCore(object, metaclass=Singleton):
             print("Please download them again if needed")
         print("Done")
 
+    @instance_lock
     def on_exit(self):
         self._db_manager.cleanup()
 
+    @instance_lock
     def construct_models(self):
         """
         Method to create and train an ML model. Instantiates MLCore and creates various models.
+        If the models are not trained, then they are trained and saved.
+        :return:
+        """
+        return self._construct_models()
+
+    def _construct_models(self):
+        """
+        Internal method to create and train an ML model. Instantiates MLCore and creates various models.
         If the models are not trained, then they are trained and saved.
         :return:
         """
@@ -144,18 +149,25 @@ class EnnIOCore(object, metaclass=Singleton):
         paths = {}
         for index, audio_path in results.items():
             if index == -1:
-                new_name = "Random.mp4"
+                new_name = os.path.basename(video_path) + "_Random.mp4"
             else:
-                new_name = self._ml_core.get_model_name_from_index(index) + ".mp4"
+                new_name = os.path.basename(video_path) + "_"\
+                           + self._ml_core.get_model_name_from_index(index) + ".mp4"
             export_path = os.path.join(self._eval_merged_dir, new_name)
             self._audio_video_merge(audio_path, video_path, export_path)
             paths[index] = export_path
 
         return paths
 
+    @instance_lock
     def update_evaluation_vote(self,video_id, winner):
-        self._db_manager.update_voted_model(video_id, winner)
+        if winner != "Random":
+            for idx, name in enumerate(self._ml_core.available_models):
+                if name == winner:
+                    winner_idx = idx+1
+                    self._db_manager.update_voted_model(video_id, winner_idx)
 
+    @instance_lock
     def use_models(self, url, start_time_str, mode="prediction"):  # input_file):
         """
         Method to use the existing model in order to predict a
@@ -163,18 +175,22 @@ class EnnIOCore(object, metaclass=Singleton):
         in order to create the models ans store them in a list
         :return: video name, audio file path
         """
+        return self._use_models(url, start_time_str, mode)
+
+    def _use_models(self, url, start_time_str, mode):
         if start_time_str:
             start_time = self._time_string_to_seconds(start_time_str)
         else:
             start_time = 0
-
+        print(type(start_time))
+        print(start_time)
         new_vid_ftrs, video_path = self._get_video_features_for_single_file(url=url, start_time=start_time,
                                                                             end_time=start_time + 20, mode=mode)
 
         # Call predict for all models
         exceptions = []
         results = {}
-        self.construct_models()
+        self._construct_models()
         predictions = self._ml_core.predict(new_vid_ftrs, video_path)
 
         for index, clip_id in predictions.items():
@@ -195,7 +211,7 @@ class EnnIOCore(object, metaclass=Singleton):
 
         return video_path, results
 
-
+    @instance_lock
     def download_video_from_url(self, url, start_time_str):
         """
         Method to download a video file from a youtube URL
@@ -225,8 +241,8 @@ class EnnIOCore(object, metaclass=Singleton):
         in order to create the models ans store them in a list
         :return:
         """
-        self.construct_models()
-
+        self._construct_models()
+        print(os.popen('which youtube-dl').read())
         if start_time_str:
             start_time = self._time_string_to_seconds(start_time_str)
         else:
@@ -247,6 +263,7 @@ class EnnIOCore(object, metaclass=Singleton):
                                                          audio_path=audio.audio_path))
         return audio.audio_path, video_path
 
+    @instance_lock
     def download_video_from_url_file(self):
         """
         Method to download video files from CSV file listing youtube URLs
@@ -325,6 +342,7 @@ class EnnIOCore(object, metaclass=Singleton):
                                       mismatch_title=mismatch_title)
         return video_file_path
 
+    @instance_lock
     def get_status(self):
         """
         Method to display systems status
@@ -353,6 +371,7 @@ class EnnIOCore(object, metaclass=Singleton):
                 "short_window": float(config["short-term-window"]),
                 "short_step": float(config["short-term-step"])}
 
+    @instance_lock
     def extract_features(self):
         """
         Method to extract audio and video features from files
@@ -418,6 +437,7 @@ class EnnIOCore(object, metaclass=Singleton):
                 buf = f.read(BLOCKSIZE)
         return hasher.hexdigest()
 
+    @instance_lock
     def drop(self, option):
         """
         Method to clear DB tables or attributes
@@ -445,6 +465,7 @@ class EnnIOCore(object, metaclass=Singleton):
                                               columns=self._video_feature_names + ['model_winner'])
         return video_df
 
+    @instance_lock
     def create_dataframe_files(self):
         video_df, audio_df, metadata_df,  = self._create_dataframes()
 
@@ -493,7 +514,7 @@ class EnnIOCore(object, metaclass=Singleton):
         :param url: Video url
         :return:
         """
-
+        print(os.popen('which youtube-dl').read())
         available_cpus = multiprocessing.cpu_count()
         if available_cpus > 1:
             available_cpus -= 1
@@ -530,14 +551,17 @@ class EnnIOCore(object, metaclass=Singleton):
         size = video_features.shape[0]
         video_features_reshaped = video_features.reshape((1, size))
 
-        if mode == "evaluation" and not self._db_manager.evaluation_video_exists(video_stream_id):
-            self._db_manager.add_evaluation_clip(clip_id=video_stream_id,
-                                                 url=url,
-                                                 start_time=start_time,
-                                                 end_time=end_time,
-                                                 clip_path=video_file_path,
-                                                 clip_title=video_stream_name,
-                                                 video_features=video_features)
+        if mode == "evaluation":
+            if not self._db_manager.evaluation_video_exists(video_stream_id):
+                self._db_manager.add_evaluation_clip(clip_id=video_stream_id,
+                                                     url=url,
+                                                     start_time=start_time,
+                                                     end_time=end_time,
+                                                     clip_path=video_file_path,
+                                                     clip_title=video_stream_name,
+                                                     video_features=video_features)
+            else:
+                raise VideoAlreadyExist("Evaluation already exists for this video")
 
 
         video_df = pd.DataFrame(video_features_reshaped, columns=video_feature_names)
@@ -554,6 +578,7 @@ class EnnIOCore(object, metaclass=Singleton):
                 return True
         return False
 
+    @instance_lock
     def evaluation_mode(self, url, start_time_str):
         """
         :param url: url for evaluation
@@ -564,24 +589,14 @@ class EnnIOCore(object, metaclass=Singleton):
             raise EnnIOException("start time must be just digits!")
 
         # Use model with evaluation parameter
-        video_path, results_dict = self.use_models(url, start_time_str, mode='evaluation')
+        video_path, results_dict = self._use_models(url, start_time_str, mode='evaluation')
         vid_id = self._db_manager.get_evaluation_clip_by_path(video_path).clip_id
         # Join Video and suggested audio
         results = self._merge_results(video_path, results_dict)
 
         return vid_id, results
 
-    def update_winner(self, video_id, winner_model):
-        """
-        :param video_id:
-        :param winner_model:
-        :return:
-        """
-        if not isinstance(winner_model, str):
-            raise EnnIOException("winner model must be in string format!")
-        self.update_evaluation_vote(video_id, winner_model)
-        return
-
+    @instance_lock
     def live_ennio(self, url, start_time_str):
         """
         the live version of ennIO checks with the voter and trains based on best model
