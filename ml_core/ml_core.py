@@ -65,6 +65,10 @@ class MLCore:
         if self.is_model_trained[model_name]:
             return
 
+        if self.is_model_trained[model_name]:
+            return
+        if model_name == 'TSNE':
+            os.makedirs(os.path.join(self.model_path, model_name), exist_ok=True)
         self.models[model_name].train_ml_model(self.video_df, self.audio_df, self.meta_df)
         self._save_model(model_name)
         self.is_model_trained[model_name] = True
@@ -97,6 +101,28 @@ class MLCore:
                                                                         self.meta_df,
                                                                         new_video_ftrs,
                                                                         new_video_path)                                                 
+        return predictions
+
+    def predict_live(self, new_video_ftrs, new_video_path, model_idx):
+        """
+        Method to suggest a music score for a video
+        :param new_video_ftrs: Features of the video
+        :return: Dictionary containing predictions of the models
+        """
+        predictions = {}
+        for index, model_name in enumerate(self.available_models):
+            if model_idx == index:
+                if model_name != "TSNE":
+                    predictions[index] = self.models[model_name].predict_ml_model(self.video_df,
+                                                                                self.audio_df,
+                                                                                self.meta_df,
+                                                                                new_video_ftrs)
+                else:
+                    predictions[index] = self.models[model_name].predict_ml_model(self.video_df,
+                                                                            self.audio_df,
+                                                                            self.meta_df,
+                                                                            new_video_ftrs,
+                                                                            new_video_path)
         return predictions
 
     def get_model_name_from_index(self,idx):

@@ -251,9 +251,11 @@ class EnnIOCore(object, metaclass=Singleton):
         new_vid_ftrs, video_path = self._get_video_features_for_single_file(url=url, start_time=start_time,
                                                                             end_time=start_time + 20,
                                                                             mode="prediction")
-        predictions = self._ml_core.predict(new_vid_ftrs, new_video_path=video_path)
 
         best_model = mu.model_voter(new_vid_ftrs, eval_dataframe)
+
+        predictions = self._ml_core.predict_live(new_vid_ftrs, new_video_path=video_path, model_idx=best_model)
+
         model_prediction_clip_id = predictions[best_model]
 
         clip = self._db_manager.get_clip_by_id(model_prediction_clip_id)[-1]
