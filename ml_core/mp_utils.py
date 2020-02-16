@@ -57,18 +57,15 @@ def model_voter(new_video_ftrs, eval_video_results_df):
     :return: the most voted model in a neighbor of 5 videos
     '''
     # get indexes of rows with not updated winning model
-    index_names = eval_video_results_df[eval_video_results_df['model_winner'] == ""].index
-    # Delete these row indexes from dataFrame
-    eval_video_results_df.drop(index_names, inplace=True)
-    mdl_winners = list(eval_video_results_df['model_winner'].values)
-    eval_video_results_df_proc = eval_video_results_df.drop(['model_winner'], axis=1)
+    eval_video_results_df_no_random = eval_video_results_df[eval_video_results_df['model_winner'] != ""]
+    mdl_winners = list(eval_video_results_df_no_random['model_winner'].values)
+    eval_video_results_df_proc = eval_video_results_df_no_random.drop(['model_winner'], axis=1)
     eval_video_ftrs = eval_video_results_df_proc.values
 
     neigh = KNeighborsClassifier(n_neighbors=5, algorithm="brute", p=2)
     neigh.fit(eval_video_ftrs, mdl_winners)
 
     video_new_nparray = new_video_ftrs.values
-    #print(video_new_nparray.shape)
     size = video_new_nparray.shape[1]
     video_new_nparray_reshaped = video_new_nparray.reshape((1, size))
 
