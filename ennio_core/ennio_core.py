@@ -254,7 +254,7 @@ class EnnIOCore(object, metaclass=Singleton):
 
         best_model = mu.model_voter(new_vid_ftrs, eval_dataframe)
 
-        predictions = self._ml_core.predict_live(new_vid_ftrs, new_video_path=video_path, model_idx=best_model)
+        predictions = self._ml_core.predict_using_model(new_vid_ftrs, new_video_path=video_path, model_idx=best_model)
 
         model_prediction_clip_id = predictions[best_model]
 

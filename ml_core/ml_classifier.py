@@ -116,13 +116,14 @@ class Classifier(MLModel):
         """
         pass
 
-    def predict_ml_model(self, video_df, audio_df, metadata_df, video_new):
+    def predict_ml_model(self, video_df, audio_df, metadata_df, video_new, video_new_path=None):
         """
         Method to predict based on input
         :param video_df: Dataframe containing video features
         :param audio_df: Dataframe containing audio features
         :param metadata_df: Dataframe containing metadata
         :param video_new: new unseen data
+        :param video_new_path: Unused here
         :return: the predited value
         """
 
