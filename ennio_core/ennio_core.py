@@ -254,9 +254,8 @@ class EnnIOCore(object, metaclass=Singleton):
 
         best_model = mu.model_voter(new_vid_ftrs, eval_dataframe)
 
-        predictions = self._ml_core.predict_using_model(new_vid_ftrs, new_video_path=video_path, model_idx=best_model)
-
-        model_prediction_clip_id = predictions[best_model]
+        model_prediction_clip_id = self._ml_core.predict_using_model(new_vid_ftrs, new_video_path=video_path,
+                                                                     model_idx=best_model)
 
         clip = self._db_manager.get_clip_by_id(model_prediction_clip_id)[-1]
         audio = self._db_manager.get_audio_by_id(clip.audio_from_clip)
