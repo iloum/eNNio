@@ -182,8 +182,7 @@ class EnnIOCore(object, metaclass=Singleton):
             start_time = self._time_string_to_seconds(start_time_str)
         else:
             start_time = 0
-        print(type(start_time))
-        print(start_time)
+
         new_vid_ftrs, video_path = self._get_video_features_for_single_file(url=url, start_time=start_time,
                                                                             end_time=start_time + 20, mode=mode)
 

@@ -90,9 +90,12 @@ class MLCore:
         """
         predictions = {}
         for index, model_name in enumerate(self.available_models):
-            start_time = time.time()
-            predictions[index] = self.predict_using_model(new_video_ftrs, new_video_path, index)
-            print("Model {} took {} seconds".format(model_name, time.time() - start_time))
+            try:
+                start_time = time.time()
+                predictions[index] = self.predict_using_model(new_video_ftrs, new_video_path, index)
+                print("Model {} took {} seconds".format(model_name, time.time() - start_time))
+            except Exception as e:
+                print("Exception raised in predict of {} : {}".format(model_name, str(e)))
         return predictions
 
     def predict_using_model(self, new_video_ftrs, new_video_path, model_idx):
