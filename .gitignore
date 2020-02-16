@@ -112,3 +112,5 @@ pyAudioAnalysis/data
 #outputs folder
 outputs/
 data/
+#lock file
+.lock

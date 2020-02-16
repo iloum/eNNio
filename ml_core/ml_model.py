@@ -16,7 +16,7 @@ class MLModel(object):
     def evaluate_ml_model(self, vdata, adata, mdata):
         raise NotImplementedError
 
-    def predict_ml_model(self, vdata, adata, mdata, video_new):
+    def predict_ml_model(self, vdata, adata, mdata, video_new, video_new_path):
         raise NotImplementedError
 
     def save_model(self, destination):

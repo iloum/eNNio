@@ -3,6 +3,7 @@ from ml_core.ml_ANN import ANN
 from ml_core.ml_classifier import Classifier
 from ml_core.ml_TSNE import TSNE
 from utilities import file_management as fm
+import time
 import os
 
 class MLCore:
@@ -65,6 +66,8 @@ class MLCore:
         if self.is_model_trained[model_name]:
             return
 
+        if model_name == 'TSNE':
+            os.makedirs(os.path.join(self.model_path, model_name), exist_ok=True)
         self.models[model_name].train_ml_model(self.video_df, self.audio_df, self.meta_df)
         self._save_model(model_name)
         self.is_model_trained[model_name] = True
@@ -82,22 +85,33 @@ class MLCore:
         """
         Method to suggest a music score for a video
         :param new_video_ftrs: Features of the video
+        :param new_video_path: Path to video file
         :return: Dictionary containing predictions of the models
         """
         predictions = {}
         for index, model_name in enumerate(self.available_models):
-            if model_name != "TSNE":
-                predictions[index] = self.models[model_name].predict_ml_model(self.video_df,
-                                                                            self.audio_df,
-                                                                            self.meta_df,
-                                                                            new_video_ftrs)
-            else:
-                predictions[index] = self.models[model_name].predict_ml_model(self.video_df,
-                                                                        self.audio_df,
-                                                                        self.meta_df,
-                                                                        new_video_ftrs,
-                                                                        new_video_path)                                                 
+            try:
+                start_time = time.time()
+                predictions[index] = self.predict_using_model(new_video_ftrs, new_video_path, index)
+                print("Model {} took {} seconds".format(model_name, time.time() - start_time))
+            except Exception as e:
+                print("Exception raised in predict of {} : {}".format(model_name, str(e)))
         return predictions
+
+    def predict_using_model(self, new_video_ftrs, new_video_path, model_idx):
+        """
+        Method to suggest a music score for a video
+        :param new_video_ftrs: Features of the video
+        :param new_video_path: Path to video file
+        :param model_idx: The index model
+        :return: Dictionary containing predictions of the models
+        """
+        model_name = self.available_models[model_idx]
+        return self.models[model_name].predict_ml_model(self.video_df,
+                                                        self.audio_df,
+                                                        self.meta_df,
+                                                        new_video_ftrs,
+                                                        new_video_path)
 
     def get_model_name_from_index(self,idx):
         return self.available_models[idx]
@@ -109,5 +123,5 @@ class MLCore:
         :return:
         """
         save_dir = os.path.join(self.model_path, model_name)
-        os.mkdir(save_dir)
+        os.makedirs(save_dir, exist_ok=True)
         self.models[model_name].save_model(save_dir)
