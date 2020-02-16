@@ -3,6 +3,7 @@ from ml_core.ml_ANN import ANN
 from ml_core.ml_classifier import Classifier
 from ml_core.ml_TSNE import TSNE
 from utilities import file_management as fm
+import time
 import os
 
 class MLCore:
@@ -89,7 +90,9 @@ class MLCore:
         """
         predictions = {}
         for index, model_name in enumerate(self.available_models):
+            start_time = time.time()
             predictions[index] = self.predict_using_model(new_video_ftrs, new_video_path, index)
+            print("Model {} took {} seconds".format(model_name, time.time() - start_time))
         return predictions
 
     def predict_using_model(self, new_video_ftrs, new_video_path, model_idx):
