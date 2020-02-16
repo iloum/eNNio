@@ -47,7 +47,7 @@ def results(request):
 
         url_out = 'display?videoid={}'.format(video_id)
         for index, (_, path) in enumerate(paths.items(), start=1):
-            url_out += '&variable{}={}'.format(index, path)
+            url_out += '&variable{}={}'.format(index, path.partition("data/")[2])
 
         # path1 = paths[0].partition("data/")[2]
         # path2 = paths[1].partition("data/")[2]
