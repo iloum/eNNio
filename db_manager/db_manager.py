@@ -191,7 +191,7 @@ class DbManager(object):
 
     # User Evaluation
     def add_evaluation_clip(self, clip_id="", url="", start_time=0, end_time=0, clip_title="", clip_path="",
-                            video_features=None, audio_id="", voted_model=0):
+                            video_features=None, audio_id="", voted_model=""):
         new_clip = UserEvaluation(clip_id=clip_id, url=url, start_time=start_time, end_time=end_time,
                                   clip_title=clip_title,
                                   clip_path=clip_path,
