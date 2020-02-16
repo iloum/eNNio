@@ -12,6 +12,6 @@ scikit-image
 tqdm
 keras
 pandas
-tensorflow==2.0.0
+tensorflow==2.0.1
 youtube_dl==2020.1.24
 django==3.0.2
