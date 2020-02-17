@@ -5,6 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 from ennio_core.ennio_core import EnnIOCore
 from ennio_exceptions import EnnIOException
 import re
+from random import shuffle
 
 RE_YOUTUBE_URL = re.compile("^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$")
 RE_TIMESTAMP = re.compile("\d{2}:\d{2}")
@@ -46,7 +47,9 @@ def results(request):
             return JsonResponse(data)
 
         url_out = 'display?videoid={}'.format(video_id)
-        for index, (_, path) in enumerate(paths.items(), start=1):
+        path_list = list(paths.values())
+        shuffle(path_list)
+        for index, path in enumerate(path_list, start=1):
             url_out += '&variable{}={}'.format(index, path.partition("data/")[2])
 
         # path1 = paths[0].partition("data/")[2]
