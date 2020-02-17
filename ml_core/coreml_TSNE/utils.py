@@ -62,7 +62,7 @@ def run_FFT(X):
 
 def run_PCA(X):
     if X.shape[1]<2:
-        return X
+        return X, None
     pca = PCA()
     pca.fit(X)
     perc_ratio = (pca.explained_variance_ratio_[:-1]-pca.explained_variance_ratio_[1:])/pca.explained_variance_ratio_[:-1]
@@ -70,10 +70,10 @@ def run_PCA(X):
     if perc_ratio_sudden_drop:
         n_components = perc_ratio_sudden_drop[0]+1
     else:
-        return X
+        return X, None
     pca2 = PCA(n_components=n_components)
     X_trans=pca2.fit_transform(X)
-    return X_trans
+    return X_trans, pca2
 
 def append_sample(x,y):
     return np.vstack((x,y[np.newaxis,:,:]))
@@ -125,36 +125,60 @@ def parse_audiofeatures2segments(features):
 
 def run_model(data):
     ILCond=min(data.shape[0], data.shape[1])
-    if ILCond<5:
+    n_components=2
+    if ILCond<n_components:
         n_components = ILCond
     else:
-        n_components = 5
-    perplexities = [5, 30, 50, 70, 100]
-    perplexity = perplexities[2]
+        pass
+    perplexities = [0.05,5, 30, 50, 70, 100]
+    perplexity = perplexities[1]
 
-    tsne = manifold.TSNE(n_components=n_components, init='pca',
-                         random_state=0, perplexity=perplexity,n_iter=3000,method="exact")
-    #lle = manifold.LocallyLinearEmbedding()
-    #fitted_model=lle.fit(Xstar)
+    tsne = manifold.TSNE(n_components=n_components, init='random',early_exaggeration=250,learning_rate=100,
+                         random_state=0, perplexity=perplexity,method="barnes_hut")
+  
     return tsne.fit_transform(data)
 
-def reduce_dimensions(X,subsets):
+def reduce_dimensions(X,subsets,precomputed_PCAs=[],run_TSNE=True):
+    pca_list = []
     print("number of features before PCA:",X.shape[1]*X.shape[2])
     Xstar = np.take(X,subsets[0],axis=2)
     Xstar=np.apply_along_axis(run_FFT,1,Xstar)
     Xstar = flatten(Xstar)
-    Xstar = run_PCA(Xstar)
-    for subset in subsets[1:]:
+    if not precomputed_PCAs:
+        Xstar, pca_1 = run_PCA(Xstar)
+        pca_list.append(pca_1)
+    else:
+        if precomputed_PCAs[0]:
+            Xstar = precomputed_PCAs[0].transform(Xstar)
+        else:
+            pass
+    for i,subset in enumerate(subsets[1:]):
         if subset:
             Xstarc = np.take(X,subset,axis=2)
             Xstarc=np.apply_along_axis(run_FFT,1,Xstarc)
             Xstarc = flatten(Xstarc)
-            Xstarc = run_PCA(Xstarc)
+            if not precomputed_PCAs:
+                Xstarc, pca_x = run_PCA(Xstarc)
+                pca_list.append(pca_x)
+            else:
+                if precomputed_PCAs[i+1]:
+                    Xstarc = precomputed_PCAs[i+1].transform(Xstarc)
+                else:
+                    pass
             Xstar = np.hstack([Xstar,Xstarc])
-            if Xstar.shape[1]==0:
-                print("wtf",subset)
     print("dimensionality reduction through PCA is complete, resulting number of features is:",Xstar.shape[1])
-    return run_model(Xstar)
+    if not precomputed_PCAs:
+        if run_TSNE:
+            TSNEd_data = run_model(Xstar)
+            return TSNEd_data, pca_list
+        else:
+            return Xstar, pca_list
+    else:
+        if run_TSNE:
+            TSNEd_data = run_model(Xstar)
+            return TSNEd_data, precomputed_PCAs
+        else:
+            return Xstar, precomputed_PCAs
 
 
 def plot_vectors(Y,labels,matches,predicted_path):
@@ -200,7 +224,7 @@ def align_videos(videos1,keys1,videos2,keys2):
     return videos1[orderings1], keys1, videos2[orderings2], keys2
 
 
-def get_matches(Y,keys,video_root_path,audio_root_path,targetfilename,topk=5):
+def get_matches(Y,keys,video_root_path,audio_root_path,targetfilename,topk=5,export_locally=False):
     matches, distances = find_nearest(Y[-1],Y[:-1],topk=topk)
     probs = 1/distances/sum(1/distances)
     title = parse_filename(targetfilename)[0]
@@ -212,20 +236,21 @@ def get_matches(Y,keys,video_root_path,audio_root_path,targetfilename,topk=5):
         matched_audio_path=list(Path(audio_root_path).glob('*%s*%s*'%(parts[1],"from_"+parts[-3]+"-to_"+parts[-2])))[0]
         matched_video_path=list(Path(video_root_path).glob('*%s*%s*'%(parts[1],"from_"+parts[-3]+"-to_"+parts[-2])))[0]
         video_path = os.path.join(video_root_path,targetfilename)
-        if matched_video_path and matched_audio_path:
-            ffmpeg_com=f"""ffmpeg -y -t 60 -i {video_path} -i {matched_video_path} -i {matched_audio_path} \
-             -filter_complex "[0:v]scale=256:144[v0];[1:v]scale=256:144[v1];[v1]drawtext='text={parts[0]}':fontcolor=white[v1b];[v0]drawtext='text={title}':fontcolor=white[v0b];[v0b][v1b]vstack[v]" \
-             -map "[v]" -map 2:a -c:a aac -shortest -strict experimental recommendation_{idx}.mp4"""
-            print(ffmpeg_com)
-            os.system(ffmpeg_com)
-        elif matched_audio_path:
-            print("predict video clip is : ",matched)
-            ffmpeg_com=f"ffmpeg -y -t 60 -i {video_path} -i {matched_audio_path} \
-            -c:v copy -c:a aac -strict experimental recommendation_{idx}.mp4"
-            print(ffmpeg_com)
-            os.system(ffmpeg_com)
-        else:
-            print("could not fetch the audio/video")
+        if export_locally:
+            if matched_video_path and matched_audio_path:
+                ffmpeg_com=f"""ffmpeg -y -t 60 -i {video_path} -i {matched_video_path} -i {matched_audio_path} \
+                -filter_complex "[0:v]scale=256:144[v0];[1:v]scale=256:144[v1];[v1]drawtext='text={parts[0]}':fontcolor=white[v1b];[v0]drawtext='text={title}':fontcolor=white[v0b];[v0b][v1b]vstack[v]" \
+                -map "[v]" -map 2:a -c:a aac -shortest -strict experimental recommendation_{idx}.mp4"""
+                print(ffmpeg_com)
+                os.system(ffmpeg_com)
+            elif matched_audio_path:
+                print("predict video clip is : ",matched)
+                ffmpeg_com=f"ffmpeg -y -t 60 -i {video_path} -i {matched_audio_path} \
+                -c:v copy -c:a aac -strict experimental recommendation_{idx}.mp4"
+                print(ffmpeg_com)
+                os.system(ffmpeg_com)
+            else:
+                print("could not fetch the audio/video")
 
 
 
