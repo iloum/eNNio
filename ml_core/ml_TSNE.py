@@ -17,31 +17,32 @@ class TSNE(MLModel):
         super().__init__(name)
         pass
 
-    def train_ml_model(self, video_df, audio_df, m_df,drop=True):
+    def train_ml_model(self, video_df, audio_df, m_df,drop=False):
         root_parsed = "data/downloads/parsed/"
         video_path = os.path.join(root_parsed,"video")
         audio_path = os.path.join(root_parsed,"audio")
-        generated_dicts_path = "data/models/TSNE/"
+        generated_dicts_path = "data/models/TSNE"
         if drop:
             try:
                 vm.drop_items(generated_dicts_path)
             except:
                 pass
-            vm.update_items(video_path,generated_dicts_path)
 
             try:
                 am.drop_items(generated_dicts_path)
             except:
                 pass
-            am.update_items(audio_path,generated_dicts_path)
+            
 
             try:
                 em.drop_items(generated_dicts_path)
             except:
                 pass
-            em.update_items(video_path,generated_dicts_path)
-        else:
-            pass
+            
+        vm.update_items(video_path,generated_dicts_path)
+        am.update_items(audio_path,generated_dicts_path)
+        em.update_items(video_path,generated_dicts_path)
+
 
         #ideally you need to exclude the target video from the list 
         #here we just drop a random video... to get things rolling..
@@ -51,7 +52,7 @@ class TSNE(MLModel):
         video_features = 291
         audio_features = 136
         emotion_features=1
-        Xemotion,emotionfeatures,emotionkeys = get_inputs(em,steps,emotion_features,predicted_path,generated_dicts_path)
+        Xemotion, emotionfeatures, emotionkeys = get_inputs(em,steps,emotion_features,predicted_path,generated_dicts_path)
         Xvideo, videofeatures, videokeys = get_inputs(vm,steps,video_features,predicted_path,generated_dicts_path)
         
         #align emotion and video features. takes care of file ordering, missing keys etc...
@@ -69,12 +70,19 @@ class TSNE(MLModel):
         videofeature_segments = parse_videofeatures2segments(videofeatures)
         audiofeature_segments = parse_audiofeatures2segments(audiofeatures)
 
+
+
+        Yvideo, pca_transformations_video = reduce_dimensions(Xvideo,videofeature_segments,run_TSNE=False)
+        Yaudio, pca_transformations_audio = reduce_dimensions(Xaudio,audiofeature_segments)
+
+
         print("successfully trained the TSNE model")
 
         self.model = {
         "Xvideo":Xvideo, "Xaudio":Xaudio, "videofeatures":videofeatures,
         "videokeys":videokeys, "audiofeatures":audiofeatures, "audiokeys":audiokeys,
-        "steps":steps
+        "steps":steps, "videofeature_segments":videofeature_segments, "audiofeature_segments":audiofeature_segments,
+        "Yvideo":Yvideo,"Yaudio":Yaudio, "pca_transformations_video":pca_transformations_video, "pca_transformations_audio":pca_transformations_audio
 
         }
         #pickle.dump(self.model, open(os.path.join(self._data_dir, self.name+".pkl"), "wb"))
@@ -97,23 +105,22 @@ class TSNE(MLModel):
         print("getting recommendations for {} please wait...".format(new_video_path))
      
         Xvideo,Xaudio,steps,videofeatures,audiofeatures,videokeys = TSNE_model["Xvideo"],TSNE_model["Xaudio"],TSNE_model["steps"],TSNE_model["videofeatures"],TSNE_model["audiofeatures"],TSNE_model["videokeys"]
+        
         vmfeatures_number = [len(x) for x in videofeatures.values()][0]
         targetvideo_vm = get_input(vm,steps,vmfeatures_number,new_video_path)
         targetvideo_em = get_input(em,steps,1,new_video_path)
         targetvideo = np.concatenate((targetvideo_vm,targetvideo_em),axis=1)
 
+        Yvideo,Yaudio = TSNE_model["Yvideo"], TSNE_model["Yaudio"]
+        pca_transformations_video, pca_transformations_audio = TSNE_model["pca_transformations_video"], TSNE_model["pca_transformations_audio"]
+        videofeature_segments = TSNE_model["videofeature_segments"]
 
-        videofeature_segments = parse_videofeatures2segments(videofeatures)
-        audiofeature_segments = parse_audiofeatures2segments(audiofeatures)
-
-        Yvideo = reduce_dimensions(append_sample(Xvideo,targetvideo),videofeature_segments)
-        Yaudio = reduce_dimensions(Xaudio,audiofeature_segments)
-
-        Yvideo_subset = Yvideo[:-1,:]
+        target_videord,_ = reduce_dimensions(targetvideo[np.newaxis,:,:],videofeature_segments,pca_transformations_video,run_TSNE=False)
+        Yvideo_plustarget = run_model(np.vstack((Yvideo,target_videord)))
 
         cca = CCA(n_components=2)
-        cca.fit(Yvideo_subset, Yaudio)
-        X_c, Y_c = cca.transform(Yvideo, Yaudio)
+        cca.fit(Yvideo_plustarget[:-1], Yaudio)
+        X_c, Y_c = cca.transform(Yvideo_plustarget, Yaudio)
         
         video_root_path = "data/downloads/parsed/video"
         audio_root_path = "data/downloads/parsed/audio"
