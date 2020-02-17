@@ -5,7 +5,7 @@ import multiprocessing
 import time
 import pandas as pd
 import numpy as np
-import re
+import shutil
 from config_manager.config_manager import ConfigManager
 from data_aquisitor.data_aquisitor import DataAquisitor
 from ennio_exceptions import VideoAlreadyExist, EnnIOException
@@ -173,9 +173,13 @@ class EnnIOCore(object, metaclass=Singleton):
         Method to use the existing model in order to predict a
         suitable music score. It assumes that the construct_model above has been called before
         in order to create the models ans store them in a list
-        :return: video name, audio file path
+        :return: video path, dictionary {model_name: suggested audio path}
         """
-        return self._use_models(url, start_time_str, mode)
+
+        video_path, results = self._use_models(url, start_time_str, mode)
+        new_results = {self._ml_core.get_model_name_from_index(index): audio_path
+                       for index, audio_path in results.items()}
+        return video_path, new_results
 
     def _use_models(self, url, start_time_str, mode):
         if start_time_str:
@@ -241,7 +245,7 @@ class EnnIOCore(object, metaclass=Singleton):
         :return:
         """
         self._construct_models()
-        print(os.popen('which youtube-dl').read())
+
         if start_time_str:
             start_time = self._time_string_to_seconds(start_time_str)
         else:
@@ -452,6 +456,9 @@ class EnnIOCore(object, metaclass=Singleton):
             self._db_manager.clear_clips_table()
         if option == "evaluation_table":
             self._db_manager.clear_user_evaluation_table()
+        if option == "models":
+            shutil.rmtree(self._model_dir)
+            os.makedirs(self._model_dir)
 
     def _create_evaluation_dataframe(self):
         features = dict()
@@ -473,17 +480,17 @@ class EnnIOCore(object, metaclass=Singleton):
         video_features_file = "video_features_df_{options}.pkl".format(options=options_str)
         video_df.to_pickle(os.path.join(self._data_dir,
                                         video_features_file))
-        print("Saved to {file_name}".format(file_name=video_features_file))
 
         options_str = str(self._get_audio_extractor_config()).replace(" ", "").replace("'", "").replace(":", "_")
         audio_features_file = "audio_features_df_{options}.pkl".format(options=options_str)
         audio_df.to_pickle(os.path.join(self._data_dir,
                                         audio_features_file))
-        print("Saved to {file_name}".format(file_name=audio_features_file))
 
         metadata_file = "metadata_df.pkl"
         metadata_df.to_pickle(os.path.join(self._data_dir, metadata_file))
-        print("Saved to {file_name}".format(file_name=metadata_file))
+        return (os.path.join(self._data_dir, video_features_file),
+                os.path.join(self._data_dir, audio_features_file),
+                os.path.join(self._data_dir, metadata_file))
 
     def _create_dataframes(self):
         video_features = dict()
@@ -514,9 +521,6 @@ class EnnIOCore(object, metaclass=Singleton):
         :param url: Video url
         :return:
         """
-        print(os.popen('which youtube-dl').read())
-        print(os.popen('which python').read())
-
         available_cpus = multiprocessing.cpu_count()
         if available_cpus > 1:
             available_cpus -= 1

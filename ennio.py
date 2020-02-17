@@ -34,13 +34,14 @@ class UserInterface(Cmd):
 
     def do_construct_model(self, args):
         """
-        Create and train a model
+        Create and train model
+        To retrain model run 'drop models'
         """
         self.ennio_core.construct_models()
 
     def do_use_model(self, args):
         """
-        Use an existing model to predict the score
+        Use all available models to predict the score
         Usage: use_model <youtube-url> [<timestamp>]
         Example: use_model https://www.youtube.com/watch?v=i-dJPoSlPfU 0:10
         """
@@ -52,35 +53,14 @@ class UserInterface(Cmd):
 
         video_name, results = self.ennio_core.use_models(url, start_time_str=start_time)
         print("Suggestions for video: {}".format(video_name))
-        for index, file_path in results.items():
-            print("{index}. {audio_path}".format(index=index,
-                                                 audio_path=file_path))
-
-
-    # def do_predict_from_model(self, args):
-    #     """
-    #     Use an existing model to predict the score
-    #     Usage: use_model <filename>
-    #     """
-    #     # input example in terminal: ennIO> use_model https://www.youtube.com/watch?v=i-dJPoSlPfU 10
-    #     if not args:
-    #         print("Video url and start time are needed")
-    #         return
-    #
-    #     inputs = args.split()
-    #     url = inputs[0]
-    #     start_time = int(inputs[1])
-    #     if not re.match(VALID_URL, inputs[0]):
-    #         print("Not valid url")
-    #         return
-    #
-    #     self.ennio_core.live_ennio(url, start_time) #input_file=args)
-
+        for model_name, file_path in results.items():
+            print("{model_name}. {audio_path}".format(model_name=model_name,
+                                                      audio_path=file_path))
 
     def do_download_video_from_url(self, args):
         """
-        Download Youtube video from url
-        Usage: download_video_from_url <URL>
+        Download Youtube video from url and insert it in training data
+        Usage: download_video_from_url <youtube-url> [<start-time(MM:SS)>]
         """
         try:
             start_time, url = self._validate_url_start_time(args)
@@ -119,7 +99,7 @@ class UserInterface(Cmd):
 
     def do_download_video_from_url_file(self, args):
         """
-        Download Youtube video from url CSV
+        Download Youtube videos from CSV file configured in config.ini
         """
         downloaded, failed = self.ennio_core.download_video_from_url_file()
         print('Downloaded files')
@@ -133,7 +113,7 @@ class UserInterface(Cmd):
 
     def do_show_status(self, args):
         """
-        Show status information about the ennIO
+        Show status information about the ennIO DB
         """
         self.ennio_core.get_status()
 
@@ -150,26 +130,34 @@ class UserInterface(Cmd):
 
     def do_drop(self, args):
         """
-        Drop information from db
-        Usage: drop [audio_features] [video_features] [tables] [evaluation_table]
+        Remove created data. Available options: audio_features|video_features|tables|evaluation_table|models
+        WARNING: THIS WILL PERMANENTLY REMOVE DATA
+        Usage: drop [audio_features] [video_features] [tables] [evaluation_table] [models]
         """
         if not args:
             print("Please give one or more options")
             return
 
         for option in args.split():
-            self.ennio_core.drop(option)
+            if input("Do you really want to drop {}? [y/n]: ".format(option)) == "y":
+                print("Dropping {}".format(option))
+                self.ennio_core.drop(option)
+                print("Done")
 
     def do_create_dataframes(self, args):
         """
         Save extracted features to pickled dataframes
         """
-        self.ennio_core.create_dataframe_files()
+        video_features_file, audio_features_file, metadata_file = self.ennio_core.create_dataframe_files()
+        print("Saved to {file_name}".format(file_name=video_features_file))
+        print("Saved to {file_name}".format(file_name=audio_features_file))
+        print("Saved to {file_name}".format(file_name=metadata_file))
+
 
     def do_evaluate(self, args):
         """
-        Evaluate models
-        Usage: evaluate <youtube-url> [<timestamp>]
+        Evaluate models by voting the best match
+        Usage: evaluate <youtube-url> [<start-time(MM:SS)>]
         Example: evaluate https://www.youtube.com/watch?v=CL5NeUZTzvw 0:15
         """
         try:
@@ -190,8 +178,8 @@ class UserInterface(Cmd):
             print()
             num_to_model[num] = model
             subprocess.run(['ffplay', '-autoexit', '-loglevel', 'quiet', exported_path])
-            # while input("Replay [y/n]: ") == "y":
-            #     subprocess.run(['ffplay', '-autoexit', exported_path])
+            while input("Replay [y/n]: ") == "y":
+                subprocess.run(['ffplay', '-autoexit', '-loglevel', 'quiet', exported_path])
 
         user_preference = input("Which score did you find more suitable {}: ".format(list(num_to_model.keys())))
 
@@ -201,7 +189,7 @@ class UserInterface(Cmd):
     def do_predict(self, args):
         """
         Predict audio
-        Usage: predict <youtube-url> [<timestamp>]
+        Usage: predict <youtube-url> [<start-time(MM:SS)>]
         Example: evaluate https://www.youtube.com/watch?v=CL5NeUZTzvw 0:15
         """
         try:
