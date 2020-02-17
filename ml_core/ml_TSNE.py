@@ -21,7 +21,7 @@ class TSNE(MLModel):
         root_parsed = "data/downloads/parsed/"
         video_path = os.path.join(root_parsed,"video")
         audio_path = os.path.join(root_parsed,"audio")
-        generated_dicts_path = "data/models"
+        generated_dicts_path = "data/models/TSNE"
         if drop:
             try:
                 vm.drop_items(generated_dicts_path)
