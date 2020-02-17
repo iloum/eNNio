@@ -57,8 +57,8 @@ def collect_lists2set(lists):
 
 def run_FFT(X):
     X = X.astype(float)
-    X = scipy.fft(X)
-    return np.abs(X)
+    X = np.abs(scipy.fft(X))**2
+    return X[0:int(len(X)/2)]
 
 def run_PCA(X):
     if X.shape[1]<2:
