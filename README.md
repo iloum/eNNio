@@ -52,17 +52,16 @@ Available commands:
 
 | Command  	                   |   Description	                                                 |
 |------------------------------|-----------------------------------------------------------------|
+| download_video_from_url_file |  Download Youtube videos from CSV file configured in config.ini |
+| evaluate  	               |  Evaluate models by voting the best match 	                     |
+| predict  	                   |  Predict audio 	                                             |
+| use_model  	               |  Use all available models to predict the score 	             |
 | construct_model              |  Create and train model 	                                     |
 | create_dataframes            |  Save extracted features to pickled dataframes 	             |
 | download_video_from_url      |  Download Youtube video from url and insert it in training data |
-| download_video_from_url_file |  Download Youtube videos from CSV file configured in config.ini |
-| drop                         |  Remove created data. Available options:                        |
-|                              |  audio_features,video_features,tables,evaluation_table,models 	 |
-| evaluate  	               |  Evaluate models by voting the best match 	                     |
 | extract_features  	       |  Extract audio and video features from downloaded file 	     |
-| predict  	                   |  Predict audio 	                                             |
+| drop                         |  Remove created data. Available options: audio_features,video_features,tables,evaluation_table,models 	 |
 | show_status  	               |  Show status information about the ennIO DB 	                 |
-| use_model  	               |  Use all available models to predict the score 	             |
 
 ### Web interface
 To run [Django lightweight development Web server on the local machine](https://docs.djangoproject.com/en/3.0/ref/django-admin/#runserver):
