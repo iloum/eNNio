@@ -86,13 +86,13 @@ def parse_videofeatures2segments(features):
     colorsSatur = [i for i,x in enumerate(features) if re.match(r"Color-Satur[0-9]+",x)]
     colorsGrey = [i for i,x in enumerate(features) if re.match(r"Color-Gray[0-9]+",x)]
     LBPs = [i for i,x in enumerate(features) if re.match(r"LBP",x)]
-    Threshdolds = [i for i,x in enumerate(features) if re.match(r".*threshhold",x)]
-    edges = [i for i,x in enumerate(features) if re.match(r"edges",x)]
+    edges1 = [i for i,x in enumerate(features) if re.match(r"edges1",x)]
+    edges2 = [i for i,x in enumerate(features) if re.match(r"edges2",x)]
     Sobel = [i for i,x in enumerate(features) if re.match(r".*[sS]obel",x)]
     flow = [i for i,x in enumerate(features) if re.match(r"^m|s$",x)]
     shots = [i for i,x in enumerate(features) if re.match(r"shots",x)]
     #restof = [x for x in range(X.shape[2]) if x not in subset_PCA]
-    feature_segments=[colorsRGB,colorsSatur,colorsGrey,LBPs,Threshdolds,edges,Sobel,flow,shots]
+    feature_segments=[colorsRGB,colorsSatur,colorsGrey,LBPs,edges1,edges2,Sobel,flow,shots]
     #for segment in feature_segments:
      #   print("----------")
       #  print(len(segment))

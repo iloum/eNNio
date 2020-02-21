@@ -43,6 +43,7 @@ def plot_model_history(model_history):
 
 def create_model():
 
+    #### model specifications
     num_train = 28709
     num_val = 7178
     batch_size = 64

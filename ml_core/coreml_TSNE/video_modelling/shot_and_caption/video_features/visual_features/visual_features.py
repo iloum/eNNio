@@ -74,51 +74,27 @@ class ImageFeatureExtractor():
 
     def getExtra(self,image):
         n_bins_per_hist = 16
-        #isolate background by thresholding
-        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-        lower_blue = np.array([0, 0, 120])
-        upper_blue = np.array([180, 38, 255])
-        mask = cv2.inRange(hsv, lower_blue, upper_blue)
-        result = cv2.bitwise_and(image, image, mask=mask)
-        b, g, r = cv2.split(result)
-        filter = g.copy()
-
-        ret,mask = cv2.threshold(filter,10,255, 1)
-        image_threshholded=image.copy()
-        image_threshholded[ mask == 1] = 255
+       
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+   
+        # Threshold the HSV image to get only blue colors 
+        threshholded = cv2.adaptiveThreshold(gray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,\
+                        cv2.THRESH_BINARY,5,2)
+        blurred1 = cv2.medianBlur(gray,3)
+        blurred2 = cv2.medianBlur(threshholded,3)
+        edges1 = cv2.Canny(blurred1,8,150)
+        edges2 = cv2.Canny(blurred2,8,150)
 
 
-        #turn to gray and blur
-        gray = cv2.cvtColor(image_threshholded, cv2.COLOR_BGR2GRAY)
-        blurredgray=img = cv2.medianBlur(gray,7)
-
-        #adaptive thresholding
-        adthreshhold = cv2.adaptiveThreshold(blurredgray,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,\
-                cv2.THRESH_BINARY,11,2)
-
-        #Canny
-        edges = cv2.Canny(image,50,250)
-
-
-        #Sobel
-        sobelX = cv2.Sobel(gray, cv2.CV_64F, 1, 0)
-        sobelY = cv2.Sobel(gray, cv2.CV_64F, 0, 1)
-
-        sobelX = np.uint8(np.absolute(sobelX))
-        sobelY = np.uint8(np.absolute(sobelY))
-
-        sobelCombined = cv2.bitwise_or(sobelX, sobelY)
         features=[]
-        for feature in [image_threshholded,adthreshhold,edges,sobelCombined]:
+        for feature in [edges1,edges2]:
             histfeat = cv2.calcHist([feature], [0], None, [n_bins_per_hist], [0, 256])
             histfeat = histfeat / histfeat.sum()
             features.extend(histfeat[:, 0].tolist())
 
         f_names = []
-        f_names.extend(["image_threshholded" + str(i) for i in range(n_bins_per_hist)])
-        f_names.extend(["adthreshhold" + str(i) for i in range(n_bins_per_hist)])
-        f_names.extend(["edges" + str(i) for i in range(n_bins_per_hist)])
-        f_names.extend(["sobelCombined" + str(i) for i in range(n_bins_per_hist)])
+        f_names.extend(["edges1" + str(i) for i in range(n_bins_per_hist)])
+        f_names.extend(["edges2" + str(i) for i in range(n_bins_per_hist)])
         return np.array(features), f_names
 
 
